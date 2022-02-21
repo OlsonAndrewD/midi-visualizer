@@ -1,10 +1,13 @@
 const { curryRight, last, round: lodashRound } = require('lodash')
-const round = curryRight(lodashRound)(2)
+const round2 = curryRight(lodashRound)(2)
+const round4 = curryRight(lodashRound)(4)
 
 module.exports = ({ config, song }) => {
     const { fps, noteApproachTime } = config
     const { notes = [] } = song
 
+    const frameLength = 1000 / fps
+    console.log('frameLength', frameLength)
     const numFramesInSong = Math.ceil(last(notes).end / 1000 * fps)
     const numFramesInNoteApproach = noteApproachTime / 1000 * fps
     const frames = Array(numFramesInNoteApproach + numFramesInSong).fill(0).map((x, frameIndex) => ({
@@ -13,21 +16,26 @@ module.exports = ({ config, song }) => {
         playingNotes: []
     }))
 
-    const frameNumberFor = songTime => (songTime + noteApproachTime) / 1000 * fps
+    const frameNumberFor = songTime => Math.floor((songTime + noteApproachTime) / 1000 * fps)
     const noteProgressIncrementPerFrame = noteApproachTime / 1000 / fps
+    const frameOffsetPercent = songTime => -round2(songTime % frameLength / frameLength * noteProgressIncrementPerFrame)
 
     notes.forEach(note => {
+        const noteStartFrameOffset = frameOffsetPercent(note.start)
+        const noteEndFrameOffset = frameOffsetPercent(note.end)
+        console.log('note', note.start, note.end)
+        console.log('offsets', noteStartFrameOffset, noteEndFrameOffset)
         const noteHeight = (note.end - note.start) / noteApproachTime
 
-        // Note approach
+        // Note approaching
         frames.slice(
             frameNumberFor(note.start) - numFramesInNoteApproach,
             frameNumberFor(note.start),
         ).forEach((frame, frameIndex) => {
             frame.flyingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
-                startProgress: round(frameIndex * noteProgressIncrementPerFrame),
-                endProgress: round(-noteHeight + frameIndex * noteProgressIncrementPerFrame)
+                startProgress: round2(noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame),
+                endProgress: round2(noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)
             })
         })
 
@@ -38,8 +46,8 @@ module.exports = ({ config, song }) => {
         ).forEach((frame, frameIndex) => {
             frame.flyingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
-                startProgress: round(1 + frameIndex * noteProgressIncrementPerFrame),
-                endProgress: round(1 - noteHeight + frameIndex * noteProgressIncrementPerFrame)
+                startProgress: round2(1 + noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame),
+                endProgress: round2(1 + noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)
             })
             frame.playingNotes.push({
                 midiNoteNumber: note.midiNoteNumber
