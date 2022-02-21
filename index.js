@@ -1,11 +1,16 @@
 const parseMidi = require('./parseMidi')
+const layoutFrames = require('./layoutFrames')
 const generateImages = require('./generateImages')
 const createVideo = require('./createVideo')
 
-const midiFileName = 'foo.mid' // TODO: Get this from CLI args.
-const fps = 30
-const outputFileName = 'awesome-video.mp4'
+const config = {
+    fps: 30,
+    midiFileName: 'foo.mid',
+    noteTravelTime: 3000,
+    outputFileName: 'awesome-video.mp4'
+}
 
-const midiNotes = parseMidi(midiFileName)
-const imageDirectory = generateImages(midiNotes, fps)
+const song = parseMidi(midiFileName)
+const frames = layoutFrames(song, config)
+const imageDirectory = generateImages(frames)
 createVideo(imageDirectory, fps, outputFileName)
