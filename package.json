@@ -14,6 +14,7 @@
     "jest": "^27.5.1"
   },
   "dependencies": {
+    "canvas": "^2.9.0",
     "lodash": "^4.17.21",
     "midi-parser-js": "^4.0.4"
   }
