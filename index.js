@@ -8,11 +8,14 @@ const config = {
     noteApproachTime: 1000,
     midiFileName: 'test-data/test.mid',
     noteTravelTime: 3000,
-    outputFileName: 'awesome-video.mp4'
+    outputFileName: 'awesome-video.mp4',
+    width: 480,
+    height: 360
 }
 
 const song = parseMidi(config.midiFileName)
+console.log(song.notes)
 const frames = layoutFrames({config, song})
-frames.forEach(x => console.log(x))
-const imageDirectory = generateImages(frames)
+// frames.forEach(x => console.log(x))
+const imageDirectory = generateImages(frames, config.width, config.height)
 createVideo(imageDirectory, config.fps, config.outputFileName)
