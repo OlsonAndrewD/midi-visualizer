@@ -5,12 +5,14 @@ const createVideo = require('./createVideo')
 
 const config = {
     fps: 30,
-    midiFileName: 'foo.mid',
+    noteApproachTime: 1000,
+    midiFileName: 'test-data/test.mid',
     noteTravelTime: 3000,
     outputFileName: 'awesome-video.mp4'
 }
 
-const song = parseMidi(midiFileName)
-const frames = layoutFrames(song, config)
+const song = parseMidi(config.midiFileName)
+const frames = layoutFrames({config, song})
+frames.forEach(x => console.log(x))
 const imageDirectory = generateImages(frames)
-createVideo(imageDirectory, fps, outputFileName)
+createVideo(imageDirectory, config.fps, config.outputFileName)
