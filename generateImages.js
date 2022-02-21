@@ -29,4 +29,5 @@ module.exports = (frames, width=480, height=360) => {
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
         writeFileSync(`./frames/frame${i}.png`, b64, "base64")
     })
+    return "./frames"
 }
