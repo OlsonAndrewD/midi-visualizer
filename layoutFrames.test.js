@@ -167,6 +167,53 @@ describe("frame layout", () => {
         expect(frames).toEqual(expectedFrames)
     })
 
+    it("can animate more slowly", () => {
+        const frames = layoutFrames({
+            config: {
+                fps: 10,
+                noteApproachTime: 2000,
+            },
+            song: {
+                notes: [
+                    {
+                        start: 0,
+                        end: 2000,
+                        midiNoteNumber: 64,
+                    }
+                ]
+            }
+        })
+
+        const flyingIn = fillArray(20, (_, index) => ({
+            flyingNotes: [
+                {
+                    startProgress: round(index * 0.05),
+                    endProgress: round(index * 0.05 - 1),
+                    midiNoteNumber: 64,
+                }
+            ],
+            playingNotes: []
+        }))
+
+        const playing = fillArray(20, (_, index) => ({
+            flyingNotes: [
+                {
+                    startProgress: round(1 + index * 0.05),
+                    endProgress: round(index * 0.05),
+                    midiNoteNumber: 64,
+                }
+            ],
+            playingNotes: [{ midiNoteNumber: 64 }]
+        }))
+
+        const expectedFrames = concat(flyingIn, playing).map((frame, frameIndex) => ({
+            ...frame,
+            frameIndex
+        }))
+        expect(frames.length).toBe(expectedFrames.length)
+        expect(frames).toEqual(expectedFrames)
+    })
+
     xit("rounds down when choosing frame numbers, so you see before you hear", () => {
         const frames = layoutFrames({
             config: {

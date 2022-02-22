@@ -16,7 +16,7 @@ module.exports = ({ config, song }) => {
     }))
 
     const frameNumberFor = songTime => Math.floor((songTime + noteApproachTime) / 1000 * fps)
-    const noteProgressIncrementPerFrame = noteApproachTime / 1000 / fps
+    const noteProgressIncrementPerFrame = 1 / numFramesInNoteApproach
     const frameOffsetPercent = songTime => -round2(songTime % frameLength / frameLength * noteProgressIncrementPerFrame)
 
     notes.forEach(note => {
