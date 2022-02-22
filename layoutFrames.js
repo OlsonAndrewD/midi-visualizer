@@ -7,7 +7,6 @@ module.exports = ({ config, song }) => {
     const { notes = [] } = song
 
     const frameLength = 1000 / fps
-    console.log('frameLength', frameLength)
     const numFramesInSong = Math.ceil(last(notes).end / 1000 * fps)
     const numFramesInNoteApproach = noteApproachTime / 1000 * fps
     const frames = Array(numFramesInNoteApproach + numFramesInSong).fill(0).map((x, frameIndex) => ({
@@ -23,8 +22,6 @@ module.exports = ({ config, song }) => {
     notes.forEach(note => {
         const noteStartFrameOffset = frameOffsetPercent(note.start)
         const noteEndFrameOffset = frameOffsetPercent(note.end)
-        console.log('note', note.start, note.end)
-        console.log('offsets', noteStartFrameOffset, noteEndFrameOffset)
         const noteHeight = (note.end - note.start) / noteApproachTime
 
         // Note approaching

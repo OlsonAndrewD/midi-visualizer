@@ -27,7 +27,7 @@ module.exports = (frames, width=480, height=360) => {
     frames.forEach((frame, i) => {
         drawFrame(canvas, frame)
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
-        writeFileSync(`./frames/frame${i}.png`, b64, "base64")
+        writeFileSync(`./frames/frame${('' + i).padStart(7, '0')}.png`, b64, "base64")
     })
-    return "./frames"
+    return "frames"
 }
