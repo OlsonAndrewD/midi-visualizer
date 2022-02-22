@@ -1,5 +1,5 @@
 const {createCanvas} = require("canvas")
-const {writeFileSync, mkdirSync, existsSync, readdirSync, rmSync} = require("fs")
+const {writeFileSync, mkdirSync, existsSync, rmSync} = require("fs")
 
 module.exports = (frames, width=480, height=360) => {
     const noteWidth = width / 88
@@ -18,12 +18,9 @@ module.exports = (frames, width=480, height=360) => {
     /** @type {HTMLCanvasElement} */
     var canvas = createCanvas(width, height)
     if(existsSync("./frames")) {
-        readdirSync("./frames").forEach(file => {
-            rmSync(`./frames/${file}`)
-        })
-    } else {
-        mkdirSync("./frames")
+        rmSync("./frames", { recursive: true })
     }
+    mkdirSync("./frames")
     frames.forEach((frame, i) => {
         drawFrame(canvas, frame)
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
