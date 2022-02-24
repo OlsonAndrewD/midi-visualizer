@@ -6,7 +6,7 @@ const createVideo = require('./createVideo')
 const config = {
     fps: 60,
     noteApproachTime: 2000,
-    midiFileName: 'test-data/test.mid',
+    midiFileName: 'test-data/tempo-test.mid',
     width: 480,
     height: 360
 }

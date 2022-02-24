@@ -1,6 +1,16 @@
 const midiParser = require("midi-parser-js")
 const {readFileSync} = require("fs")
 
+// There seems to be a bug in the midi-parser-js code that handles meta events.
+// It reads twice as many data bytes as it should, effectively causing it to skip data
+// that shouldn't be read as part of the unknown event.
+// But if we give it a customInterpreter to invoke for unknown events, it reads the correct number of bytes.
+// So, here's a customInterpreter that just ignores the data that was read.
+midiParser.customInterpreter = (msgType, arrayBuffer, metaEventLength) => {
+    console.log(`returning 0 for data of unknown msgType ${msgType} of length ${metaEventLength}`)
+    return 0
+}
+
 module.exports = (midiFileName) => {
     var data = midiParser.parse(readFileSync(midiFileName, "base64"))
     // console.log(data)
