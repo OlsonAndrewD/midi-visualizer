@@ -1,5 +1,6 @@
 const midiParser = require("midi-parser-js")
 const {readFileSync} = require("fs")
+const { defaults, first } = require("lodash")
 
 // There seems to be a bug in the midi-parser-js code that handles meta events.
 // It reads twice as many data bytes as it should, effectively causing it to skip data
@@ -21,17 +22,35 @@ module.exports = (midiFileName) => {
     // })
     var notes = []
     var currentNotes = {}
+    const allTempoChanges = []
+    var nextTempoChanges = []
+    var mostRecentTempoChange = null
     var currentTick = 0
-    var millisecondsPerQuarterNote = 400
     var ticksPerQuarterNote = data.timeDivision
-    function ticksToMilliseconds(ticks) {
-        return (ticks / ticksPerQuarterNote) * millisecondsPerQuarterNote
+    function ticksToMilliseconds(ticks, tempo) {
+        defaults(tempo, {
+            millisecondsPerQuarterNote: 400,
+            start: 0,
+            tick: 0
+        })
+        const ticksSinceLastTempoChange = ticks - tempo.ticks
+        return tempo.start + (ticksSinceLastTempoChange / ticksPerQuarterNote) * tempo.millisecondsPerQuarterNote
     }
     data.track.forEach(track => {
         track.event.forEach(event => {
             currentTick += event.deltaTime
             if(event.metaType == 81) {
-                millisecondsPerQuarterNote = Math.round(event.data / 1000)
+                const newTempoChange = {
+                    millisecondsPerQuarterNote: Math.round(event.data / 1000),
+                    start: ticksToMilliseconds(currentTick, mostRecentTempoChange),
+                    tick: currentTick,
+                }
+                allTempoChanges.push(newTempoChange)
+                nextTempoChanges.push(newTempoChange)
+            }
+            const nextTempoChange = first(nextTempoChanges)
+            if(nextTempoChange && currentTick >= nextTempoChange.tick) {
+                mostRecentTempoChange = nextTempoChanges.shift()
             }
             if(event.type == 9) {
                 currentNotes[event.data[0]] = {
@@ -44,8 +63,8 @@ module.exports = (midiFileName) => {
                     currentNote.endTick = currentTick
                     notes.push({
                         midiNoteNumber: event.data[0],
-                        start: ticksToMilliseconds(currentNote.startTick),
-                        end: ticksToMilliseconds(currentNote.endTick)
+                        start: ticksToMilliseconds(currentNote.startTick, mostRecentTempoChange),
+                        end: ticksToMilliseconds(currentNote.endTick, mostRecentTempoChange)
                     })
                     currentNotes[event.data[0]] = null
                 }
@@ -53,6 +72,8 @@ module.exports = (midiFileName) => {
         })
         currentNotes = {}
         currentTick = 0
+        nextTempoChanges = [...allTempoChanges]
+        mostRecentTempoChange = null
     })
     return {notes}
 }
