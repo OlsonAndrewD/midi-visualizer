@@ -1,5 +1,6 @@
 const midiParser = require("midi-parser-js")
 const {readFileSync} = require("fs")
+const {last} = require("lodash")
 
 // There seems to be a bug in the midi-parser-js code that handles meta events.
 // It reads twice as many data bytes as it should, effectively causing it to skip data
@@ -22,17 +23,32 @@ module.exports = (midiFileName) => {
     var notes = []
     var currentNotes = {}
     var currentTick = 0
-    var millisecondsPerQuarterNote = 400
     var ticksPerQuarterNote = data.timeDivision
+    var tempoChanges = []
     function ticksToMilliseconds(ticks) {
-        return (ticks / ticksPerQuarterNote) * millisecondsPerQuarterNote
+        for (let i = 0; i < tempoChanges.length; i++) {
+            const tempoChange = tempoChanges[(tempoChanges.length - 1) - i];
+            if(currentTick >= tempoChange.startTick) {
+                return Math.round(((ticks / ticksPerQuarterNote) * tempoChange.msPerQuarterNote) + tempoChange.startTime)
+            }
+        }
     }
     data.track.forEach(track => {
         track.event.forEach(event => {
             currentTick += event.deltaTime
             if(event.metaType == 81) {
-                millisecondsPerQuarterNote = Math.round(event.data / 1000)
+                tempoChanges.push({
+                    msPerQuarterNote: event.data / 1000,
+                    startTick: currentTick,
+                    startTime: last(tempoChanges) ? (last(tempoChanges).startTime) + (currentTick - (last(tempoChanges).startTick) / ticksPerQuarterNote * last(tempoChanges).msPerQuarterNote) : 0
+                })
             }
+        })
+        currentTick = 0
+    })
+    data.track.forEach(track => {
+        track.event.forEach(event => {
+            currentTick += event.deltaTime
             if(event.type == 9) {
                 currentNotes[event.data[0]] = {
                     startTick: currentTick
