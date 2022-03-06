@@ -5,6 +5,27 @@ const createVideo = require('./createVideo')
 const outputLine = require('./consoleColors')
 const {existsSync, readFileSync} = require("fs")
 
+const consoleStyles = {
+    hideCursor: "\x1b[?25l",
+    showCursor: "\x1b[?25h",
+    moveCursorUp: (num) => {
+        return {lines: `\x1b[${num}A`}
+    },
+    moveCursorDown: (num) => {
+        return {lines: `\x1b[${num}B`}
+    },
+    moveCursorRight: (num) => {
+        return {columns: `\x1b[${num}C`}
+    },
+    moveCursorLeft: (num) => {
+        return {columns: `\x1b[${num}D`}
+    },
+    eraseLine: "\x1b[2K\r",
+    greenDone: "\x1b[38;5;40m\x1b[48;5;0mDone\x1b[0m"
+}
+
+console.log(consoleStyles.hideCursor + consoleStyles.moveCursorUp(1).lines)
+
 // const config = {
 //     fps: 60,
 //     noteApproachTime: 2000,
@@ -32,13 +53,18 @@ if(existsSync("./midiconfig.json")) {
             }
             if(!config[prop]) outputLine(196, 0, `  ${prop}`.padEnd(28, " "))
         })
-        if(shouldError) process.exit(1)
+        if(shouldError) {
+            console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
+            process.exit(1)
+        }
     } catch (err) {
         outputLine(196, 0, "Error: Could not parse config JSON.")
+        console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
         process.exit(1)
     }
 } else {
     outputLine(196, 0, "Error: midiconfig.json does not exist in local directory.")
+    console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
 
@@ -48,8 +74,10 @@ try {
     song = parseMidi(config.midiFileName)
 } catch (err) {
     outputLine(196, 0, "Error: Failed to parse MIDI.")
+    console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
+console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + "Parsing MIDI file... " + consoleStyles.greenDone)
 
 console.log(`Laying out frames for ${song.notes.length} notes...`)
 var frames
@@ -57,8 +85,10 @@ try {
     frames = layoutFrames({config, song})
 } catch (err) {
     outputLine(196, 0, "Error: Laying out frames failed.")
+    console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
+console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + `Laying out frames for ${song.notes.length} notes... ` + consoleStyles.greenDone)
 
 console.log(`Generating ${frames.length} frame images...`)
 var imageDirectory
@@ -66,11 +96,13 @@ try {
     imageDirectory = generateImages(frames, config.width, config.height)
 } catch (err) {
     outputLine(196, 0, "Error: Couldn't draw frames.")
+    console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
+console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + `Generating ${frames.length} frame images... ` + consoleStyles.greenDone)
 // createVideo(imageDirectory, config.fps, config.outputFileName)
 
-outputLine(40, 0, `    ___    ____       __                 __
+outputLine(40, 0, `${consoleStyles.showCursor}    ___    ____       __                 __
    /   |  / / /  ____/ /___  ____  ___  / /
   / /| | / / /  / __  / __ \\/ __ \\/ _ \\/ / 
  / ___ |/ / /  / /_/ / /_/ / / / /  __/_/  

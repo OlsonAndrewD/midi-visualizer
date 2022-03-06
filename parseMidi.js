@@ -9,7 +9,7 @@ const {last} = require("lodash")
 // So, here's a customInterpreter that just reads it but ignores the result.
 midiParser.customInterpreter = (msgType, arrayBuffer, metaEventLength) => {
     arrayBuffer.readInt(metaEventLength)
-    console.log(`returning 0 for data of unknown msgType ${msgType} of length ${metaEventLength}`)
+    // console.log(`returning 0 for data of unknown msgType ${msgType} of length ${metaEventLength}`)
     return 0
 }
 

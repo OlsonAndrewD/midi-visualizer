@@ -171,13 +171,16 @@ module.exports = (frames, width = 480, height = 360) => {
     }
     mkdirSync("./frames")
     var ctx = canvas.getContext("2d")
+    console.log("")
     frames.forEach((frame, i) => {
         drawFrame(ctx, frame)
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
         writeFileSync(`./frames/frame${('' + i).padStart(7, '0')}.png`, b64, "base64")
-        if (i > 0 && i % 100 === 0) {
-            console.log(`  done with ${i}...`)
-        }
+        // if (i > 0 && i % 100 === 0) {
+        //     console.log(`  done with ${i}...`)
+        // }
+        console.log(`\x1b[1A\x1b[2K\rDone with ${i}/${frames.length} frames...`)
     })
+    console.log("\x1b[1A\x1b[2K\r\x1b[1A")
     return "frames"
 }
