@@ -31,8 +31,8 @@ module.exports = ({ config, song }) => {
         ).forEach((frame, frameIndex) => {
             frame.flyingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
-                startProgress: round2(noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame),
-                endProgress: round2(noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)
+                startProgress: Math.min(1, round2(noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame)),
+                endProgress: Math.min(1, round2(noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame))
             })
         })
 
@@ -43,8 +43,8 @@ module.exports = ({ config, song }) => {
         ).forEach((frame, frameIndex) => {
             frame.flyingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
-                startProgress: round2(1 + noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame),
-                endProgress: round2(1 + noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)
+                startProgress: Math.min(1, round2(1 + noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame)),
+                endProgress: Math.min(1, round2(1 + noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame))
             })
             frame.playingNotes.push({
                 midiNoteNumber: note.midiNoteNumber

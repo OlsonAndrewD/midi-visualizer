@@ -52,58 +52,56 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     }
 
     const notePositionsInOctave = (() => {
-        const widths = {
-            whiteKeyNextToBlackKey: whiteKeyEdgeWidth - halfBlackKeyWidth,
-            whiteKeyBetweenBlackKeys: whiteKeyEdgeWidth - blackKeyWidth,
-        }
+        const whiteKeyFlyInWidth = whiteKeyEdgeWidth - 2
+        const whiteKeyOffset = 1
         return {
             0: { // C
-                xOffset: 0,
-                width: widths.whiteKeyNextToBlackKey,
+                xOffset: whiteKeyOffset,
+                width: whiteKeyFlyInWidth,
             },
             1: { // C#
                 xOffset: whiteKeyEdgeWidth - halfBlackKeyWidth,
                 width: blackKeyWidth,
             },
             2: { // D
-                xOffset: whiteKeyEdgeWidth + halfBlackKeyWidth,
-                width: widths.whiteKeyBetweenBlackKeys,
+                xOffset: whiteKeyEdgeWidth + whiteKeyOffset,
+                width: whiteKeyFlyInWidth,
             },
             3: { // D#
                 xOffset: 2 * whiteKeyEdgeWidth - halfBlackKeyWidth,
                 width: blackKeyWidth,
             },
             4: { // E
-                xOffset: 2 * whiteKeyEdgeWidth,
-                width: widths.whiteKeyNextToBlackKey,
+                xOffset: 2 * whiteKeyEdgeWidth + whiteKeyOffset,
+                width: whiteKeyFlyInWidth,
             },
             5: { // F
-                xOffset: 3 * whiteKeyEdgeWidth,
-                width: widths.whiteKeyNextToBlackKey,
+                xOffset: 3 * whiteKeyEdgeWidth + whiteKeyOffset,
+                width: whiteKeyFlyInWidth,
             },
             6: { // F#
                 xOffset: 4 * whiteKeyEdgeWidth - halfBlackKeyWidth,
                 width: blackKeyWidth,
             },
             7: { // G
-                xOffset: 4 * whiteKeyEdgeWidth,
-                width: widths.whiteKeyBetweenBlackKeys,
+                xOffset: 4 * whiteKeyEdgeWidth + whiteKeyOffset,
+                width: whiteKeyFlyInWidth,
             },
             8: { // G#
                 xOffset: 5 * whiteKeyEdgeWidth - halfBlackKeyWidth,
                 width: blackKeyWidth,
             },
             9: { // A
-                xOffset: 5 * whiteKeyEdgeWidth,
-                width: widths.whiteKeyBetweenBlackKeys,
+                xOffset: 5 * whiteKeyEdgeWidth + whiteKeyOffset,
+                width: whiteKeyFlyInWidth,
             },
             10: { // A#
                 xOffset: 6 * whiteKeyEdgeWidth - halfBlackKeyWidth,
                 width: blackKeyWidth,
             },
             11: { // B
-                xOffset: 6 * whiteKeyEdgeWidth,
-                width: widths.whiteKeyNextToBlackKey,
+                xOffset: 6 * whiteKeyEdgeWidth + whiteKeyOffset,
+                width: whiteKeyFlyInWidth,
             },
         }
     })()
@@ -135,6 +133,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
 module.exports = (frames, width = 480, height = 360) => {
     const keyboardHeight = height * 0.1
     const flyInHeight = height - keyboardHeight
+    console.log('flyInHeight', flyInHeight)
     const keyboard = createKeyboard({
         keyboardHeight,
         height,
@@ -153,6 +152,9 @@ module.exports = (frames, width = 480, height = 360) => {
         frame.flyingNotes.forEach(note => {
             const notePosition = keyboard.getNotePosition(note.midiNoteNumber)
             if (notePosition) {
+                // if (note.startProgress > 1) {
+                //     console.log('startProgress', startProgress)
+                // }
                 ctx.fillRect(
                     notePosition.xOffset,
                     note.endProgress * flyInHeight,
