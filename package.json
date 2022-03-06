@@ -5,12 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "avi30": "ffmpeg -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.avi",
-    "avi60": "ffmpeg -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.avi",
-    "mpeg30": "ffmpeg -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.mp4",
-    "mpeg60": "ffmpeg -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.mp4",
-    "mov30": "ffmpeg -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.mov",
-    "mov60": "ffmpeg -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.mov",
+    "avi30": "ffmpeg -y -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.avi",
+    "avi60": "ffmpeg -y -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.avi",
+    "mpeg30": "ffmpeg -y -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.mp4",
+    "mpeg60": "ffmpeg -y -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.mp4",
+    "mov30": "ffmpeg -y -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.mov",
+    "mov60": "ffmpeg -y -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.mov",
     "test": "jest --watch"
   },
   "author": "",
