@@ -74,6 +74,7 @@ try {
     song = parseMidi(config.midiFileName)
 } catch (err) {
     outputLine(196, 0, "Error: Failed to parse MIDI.")
+    console.error(err)
     console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
@@ -85,6 +86,7 @@ try {
     frames = layoutFrames({config, song})
 } catch (err) {
     outputLine(196, 0, "Error: Laying out frames failed.")
+    console.error(err)
     console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
@@ -96,6 +98,7 @@ try {
     imageDirectory = generateImages(frames, config.width, config.height)
 } catch (err) {
     outputLine(196, 0, "Error: Couldn't draw frames.")
+    console.error(err)
     console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
