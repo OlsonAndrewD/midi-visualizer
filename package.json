@@ -5,12 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "avi30": "ffmpeg -y -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.avi",
-    "avi60": "ffmpeg -y -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.avi",
-    "mpeg30": "ffmpeg -y -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.mp4",
-    "mpeg60": "ffmpeg -y -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.mp4",
-    "mov30": "ffmpeg -y -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.mov",
-    "mov60": "ffmpeg -y -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.mov",
+    "mpeg30": "ffmpeg -y -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video-bad-timing.mp4 && npm run offset-timing-mpeg",
+    "mpeg60": "ffmpeg -y -f image2 -framerate 60 -i frames/frame%07d.png -i test-data/Mixdown/Mixdown.wav -pix_fmt yuv420p video-bad-timing.mp4 && npm run offset-timing-mpeg",
+    "mov30": "ffmpeg -y -f image2 -framerate 30 -i frames/frame%07d.png -pix_fmt yuv420p video.mov && npm run offset-timing-mov",
+    "mov60": "ffmpeg -y -f image2 -framerate 60 -i frames/frame%07d.png -pix_fmt yuv420p video.mov && npm run offset-timing-mov",
+    "offset-timing-mpeg": "ffmpeg -y -i video-bad-timing.mp4 -itsoffset 2 -i video-bad-timing.mp4 -map 0:v -map 1:a -c copy video.mp4",
+    "offset-timing-mov": "ffmpeg -y -i video-bad-timing.mov -itsoffset 2 -i video-bad-timing.mov -map 0:v -map 1:a -c copy video.mov",
     "test": "jest --watch"
   },
   "author": "",

@@ -3,3 +3,5 @@ frames
 *.avi
 *.mp4
 *.mov
+test-data/Mixdown
+*.song
