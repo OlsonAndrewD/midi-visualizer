@@ -32,11 +32,11 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         ctx.lineWidth = 1
         ctx.strokeStyle = "black"
 
-        ctx.fillStyle = 'red'
         for (let index = 0; index < 52; index++) {
             const octave = Math.floor(index / 7)
             const midiNoteNumber = whiteKeyMidiNoteNumbers[index % 7] + octave * 12
             if (noteLookup[midiNoteNumber]) {
+                ctx.fillStyle = noteLookup[midiNoteNumber].color
                 ctx.fillRect(
                     index * whiteKeyEdgeWidth,
                     keyboardTop,
@@ -55,7 +55,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         ctx.fillStyle = "black"
 
         const drawBlackKey = (x, midiNoteNumber) => {
-            ctx.fillStyle = noteLookup[midiNoteNumber] ? 'red' : 'black'
+            ctx.fillStyle = noteLookup[midiNoteNumber] ? noteLookup[midiNoteNumber].color : 'black'
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight)
         }
 
@@ -176,6 +176,7 @@ module.exports = (frames, width = 480, height = 360) => {
 
         ctx.fillStyle = "white"
         frame.flyingNotes.forEach(note => {
+            ctx.fillStyle = note.color
             const notePosition = keyboard.getFlyingNotePosition(note.midiNoteNumber)
             if (notePosition) {
                 // if (note.startProgress > 1) {
