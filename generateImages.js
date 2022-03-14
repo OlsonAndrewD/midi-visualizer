@@ -3,13 +3,13 @@ const { writeFileSync, mkdirSync, existsSync, rmSync } = require("fs")
 const { keyBy } = require("lodash")
 
 const whiteKeyMidiNoteNumbers = [
-    33, // A0
-    35,
-    36,
-    38,
-    40,
-    41,
-    43,
+    21, // A0
+    23,
+    24,
+    26,
+    28,
+    29,
+    31,
 ]
 
 const createKeyboard = (({ keyboardHeight, height, width }) => {
@@ -59,7 +59,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight)
         }
 
-        drawBlackKey(whiteKeyEdgeWidth - halfBlackKeyWidth, 34)
+        drawBlackKey(whiteKeyEdgeWidth - halfBlackKeyWidth, 22)
 
         const firstCSharpX = whiteKeyEdgeWidth * 3 - halfBlackKeyWidth
         const drawBlackKeyGroup = (x, numKeys, baseMidiNoteNumber) => {
@@ -69,10 +69,10 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         }
         for (let index = 0; index < 7; index++) {
             const cSharp = firstCSharpX + index * octaveWidth
-            drawBlackKeyGroup(cSharp, 2, 37 + 12 * index)
+            drawBlackKeyGroup(cSharp, 2, 25 + 12 * index)
 
             const fSharp = cSharp + 3 * whiteKeyEdgeWidth
-            drawBlackKeyGroup(fSharp, 3, 42 + 12 * index)
+            drawBlackKeyGroup(fSharp, 3, 30 + 12 * index)
         }
     }
 
@@ -133,11 +133,11 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         })()
 
         return (midiNoteNumber) => {
-            if (midiNoteNumber < 33 || midiNoteNumber > 120) {
+            if (midiNoteNumber < 21 || midiNoteNumber > 120) {
                 return null
             }
 
-            const octave = Math.floor((midiNoteNumber - 24) / 12)
+            const octave = Math.floor((midiNoteNumber - 12) / 12)
             const xOctaveStart = xOctaveZero + octave * octaveWidth
 
             // C is 0, C# is 1, etc...
