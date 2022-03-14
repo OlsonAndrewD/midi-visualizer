@@ -202,7 +202,7 @@ module.exports = (frames, width = 480, height = 360) => {
         drawFrame(ctx, frame)
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
         writeFileSync(`./frames/frame${('' + i).padStart(7, '0')}.png`, b64, "base64")
-        // console.log(`\x1b[1A\x1b[2K\rDone with ${i}/${frames.length} frames...`)
+        console.log(`\x1b[1A\x1b[2K\rDone with ${i}/${frames.length} frames...`)
     })
     console.log("\x1b[1A\x1b[2K\r\x1b[1A")
     return "frames"
