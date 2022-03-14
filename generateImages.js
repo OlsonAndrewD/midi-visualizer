@@ -1,5 +1,16 @@
 const { createCanvas } = require("canvas")
 const { writeFileSync, mkdirSync, existsSync, rmSync } = require("fs")
+const { keyBy } = require("lodash")
+
+const whiteKeyMidiNoteNumbers = [
+    33, // A0
+    35,
+    36,
+    38,
+    40,
+    41,
+    43,
+]
 
 const createKeyboard = (({ keyboardHeight, height, width }) => {
     const keyboardTop = height - keyboardHeight
@@ -12,14 +23,27 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
 
     const xOctaveZero = 2 * whiteKeyEdgeWidth - octaveWidth
 
-    const draw = (ctx) => {
+    const draw = (ctx, playingNotes) => {
+        const noteLookup = keyBy(playingNotes, 'midiNoteNumber')
+
         ctx.fillStyle = "white"
         ctx.fillRect(0, keyboardTop, keyboardWidth, keyboardHeight)
 
         ctx.lineWidth = 1
         ctx.strokeStyle = "black"
 
+        ctx.fillStyle = 'red'
         for (let index = 0; index < 52; index++) {
+            const octave = Math.floor(index / 7)
+            const midiNoteNumber = whiteKeyMidiNoteNumbers[index % 7] + octave * 12
+            if (noteLookup[midiNoteNumber]) {
+                ctx.fillRect(
+                    index * whiteKeyEdgeWidth,
+                    keyboardTop,
+                    whiteKeyEdgeWidth,
+                    keyboardHeight
+                )
+            }
             ctx.strokeRect(
                 index * whiteKeyEdgeWidth,
                 keyboardTop,
@@ -30,110 +54,112 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
 
         ctx.fillStyle = "black"
 
-        const drawBlackKey = (x) => {
+        const drawBlackKey = (x, midiNoteNumber) => {
+            ctx.fillStyle = noteLookup[midiNoteNumber] ? 'red' : 'black'
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight)
         }
 
-        drawBlackKey(whiteKeyEdgeWidth - halfBlackKeyWidth)
+        drawBlackKey(whiteKeyEdgeWidth - halfBlackKeyWidth, 34)
 
         const firstCSharpX = whiteKeyEdgeWidth * 3 - halfBlackKeyWidth
-        const drawBlackKeyGroup = (x, numKeys) => {
+        const drawBlackKeyGroup = (x, numKeys, baseMidiNoteNumber) => {
             for (let index = 0; index < numKeys; index++) {
-                drawBlackKey(x + index * whiteKeyEdgeWidth)
+                drawBlackKey(x + index * whiteKeyEdgeWidth, baseMidiNoteNumber + 2 * index)
             }
         }
         for (let index = 0; index < 7; index++) {
             const cSharp = firstCSharpX + index * octaveWidth
-            drawBlackKeyGroup(cSharp, 2)
+            drawBlackKeyGroup(cSharp, 2, 37 + 12 * index)
 
             const fSharp = cSharp + 3 * whiteKeyEdgeWidth
-            drawBlackKeyGroup(fSharp, 3)
+            drawBlackKeyGroup(fSharp, 3, 42 + 12 * index)
         }
     }
 
-    const notePositionsInOctave = (() => {
-        const whiteKeyFlyInWidth = whiteKeyEdgeWidth - 2
-        const whiteKeyOffset = 1
-        return {
-            0: { // C
-                xOffset: whiteKeyOffset,
-                width: whiteKeyFlyInWidth,
-            },
-            1: { // C#
-                xOffset: whiteKeyEdgeWidth - halfBlackKeyWidth,
-                width: blackKeyWidth,
-            },
-            2: { // D
-                xOffset: whiteKeyEdgeWidth + whiteKeyOffset,
-                width: whiteKeyFlyInWidth,
-            },
-            3: { // D#
-                xOffset: 2 * whiteKeyEdgeWidth - halfBlackKeyWidth,
-                width: blackKeyWidth,
-            },
-            4: { // E
-                xOffset: 2 * whiteKeyEdgeWidth + whiteKeyOffset,
-                width: whiteKeyFlyInWidth,
-            },
-            5: { // F
-                xOffset: 3 * whiteKeyEdgeWidth + whiteKeyOffset,
-                width: whiteKeyFlyInWidth,
-            },
-            6: { // F#
-                xOffset: 4 * whiteKeyEdgeWidth - halfBlackKeyWidth,
-                width: blackKeyWidth,
-            },
-            7: { // G
-                xOffset: 4 * whiteKeyEdgeWidth + whiteKeyOffset,
-                width: whiteKeyFlyInWidth,
-            },
-            8: { // G#
-                xOffset: 5 * whiteKeyEdgeWidth - halfBlackKeyWidth,
-                width: blackKeyWidth,
-            },
-            9: { // A
-                xOffset: 5 * whiteKeyEdgeWidth + whiteKeyOffset,
-                width: whiteKeyFlyInWidth,
-            },
-            10: { // A#
-                xOffset: 6 * whiteKeyEdgeWidth - halfBlackKeyWidth,
-                width: blackKeyWidth,
-            },
-            11: { // B
-                xOffset: 6 * whiteKeyEdgeWidth + whiteKeyOffset,
-                width: whiteKeyFlyInWidth,
-            },
+    const getFlyingNotePosition = (() => {
+        const notePositionsInOctave = (() => {
+            const whiteKeyFlyInWidth = whiteKeyEdgeWidth - 2
+            const whiteKeyOffset = 1
+            return {
+                0: { // C
+                    xOffset: whiteKeyOffset,
+                    width: whiteKeyFlyInWidth,
+                },
+                1: { // C#
+                    xOffset: whiteKeyEdgeWidth - halfBlackKeyWidth,
+                    width: blackKeyWidth,
+                },
+                2: { // D
+                    xOffset: whiteKeyEdgeWidth + whiteKeyOffset,
+                    width: whiteKeyFlyInWidth,
+                },
+                3: { // D#
+                    xOffset: 2 * whiteKeyEdgeWidth - halfBlackKeyWidth,
+                    width: blackKeyWidth,
+                },
+                4: { // E
+                    xOffset: 2 * whiteKeyEdgeWidth + whiteKeyOffset,
+                    width: whiteKeyFlyInWidth,
+                },
+                5: { // F
+                    xOffset: 3 * whiteKeyEdgeWidth + whiteKeyOffset,
+                    width: whiteKeyFlyInWidth,
+                },
+                6: { // F#
+                    xOffset: 4 * whiteKeyEdgeWidth - halfBlackKeyWidth,
+                    width: blackKeyWidth,
+                },
+                7: { // G
+                    xOffset: 4 * whiteKeyEdgeWidth + whiteKeyOffset,
+                    width: whiteKeyFlyInWidth,
+                },
+                8: { // G#
+                    xOffset: 5 * whiteKeyEdgeWidth - halfBlackKeyWidth,
+                    width: blackKeyWidth,
+                },
+                9: { // A
+                    xOffset: 5 * whiteKeyEdgeWidth + whiteKeyOffset,
+                    width: whiteKeyFlyInWidth,
+                },
+                10: { // A#
+                    xOffset: 6 * whiteKeyEdgeWidth - halfBlackKeyWidth,
+                    width: blackKeyWidth,
+                },
+                11: { // B
+                    xOffset: 6 * whiteKeyEdgeWidth + whiteKeyOffset,
+                    width: whiteKeyFlyInWidth,
+                },
+            }
+        })()
+
+        return (midiNoteNumber) => {
+            if (midiNoteNumber < 33 || midiNoteNumber > 120) {
+                return null
+            }
+
+            const octave = Math.floor((midiNoteNumber - 24) / 12)
+            const xOctaveStart = xOctaveZero + octave * octaveWidth
+
+            // C is 0, C# is 1, etc...
+            const noteInOctave = midiNoteNumber % 12
+            const notePositionInOctave = notePositionsInOctave[noteInOctave]
+
+            return {
+                xOffset: xOctaveStart + notePositionInOctave.xOffset,
+                width: notePositionInOctave.width,
+            }
         }
     })()
 
-    const getNotePosition = (midiNoteNumber) => {
-        if (midiNoteNumber < 33 || midiNoteNumber > 120) {
-            return null
-        }
-
-        const octave = Math.floor((midiNoteNumber - 24) / 12)
-        const xOctaveStart = xOctaveZero + octave * octaveWidth
-
-        // C is 0, C# is 1, etc...
-        const noteInOctave = midiNoteNumber % 12
-        const notePositionInOctave = notePositionsInOctave[noteInOctave]
-
-        return {
-            xOffset: xOctaveStart + notePositionInOctave.xOffset,
-            width: notePositionInOctave.width,
-        }
-    }
-
     return {
         draw,
-        getNotePosition,
+        getFlyingNotePosition,
     }
 })
 
 module.exports = (frames, width = 480, height = 360) => {
     const keyboardHeight = height * 0.1
     const flyInHeight = height - keyboardHeight
-    console.log('flyInHeight', flyInHeight)
     const keyboard = createKeyboard({
         keyboardHeight,
         height,
@@ -146,11 +172,11 @@ module.exports = (frames, width = 480, height = 360) => {
         ctx.fillStyle = "black"
         ctx.fillRect(0, 0, width, height)
 
-        keyboard.draw(ctx)
+        keyboard.draw(ctx, frame.playingNotes)
 
         ctx.fillStyle = "white"
         frame.flyingNotes.forEach(note => {
-            const notePosition = keyboard.getNotePosition(note.midiNoteNumber)
+            const notePosition = keyboard.getFlyingNotePosition(note.midiNoteNumber)
             if (notePosition) {
                 // if (note.startProgress > 1) {
                 //     console.log('startProgress', startProgress)
@@ -176,10 +202,7 @@ module.exports = (frames, width = 480, height = 360) => {
         drawFrame(ctx, frame)
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
         writeFileSync(`./frames/frame${('' + i).padStart(7, '0')}.png`, b64, "base64")
-        // if (i > 0 && i % 100 === 0) {
-        //     console.log(`  done with ${i}...`)
-        // }
-        console.log(`\x1b[1A\x1b[2K\rDone with ${i}/${frames.length} frames...`)
+        // console.log(`\x1b[1A\x1b[2K\rDone with ${i}/${frames.length} frames...`)
     })
     console.log("\x1b[1A\x1b[2K\r\x1b[1A")
     return "frames"
