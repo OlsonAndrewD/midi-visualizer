@@ -9,7 +9,6 @@ const { defaults, first } = require("lodash")
 // So, here's a customInterpreter that just reads it but ignores the result.
 midiParser.customInterpreter = (msgType, arrayBuffer, metaEventLength) => {
     arrayBuffer.readInt(metaEventLength)
-    console.log(`returning 0 for data of unknown msgType ${msgType} of length ${metaEventLength}`)
     return 0
 }
 
@@ -27,13 +26,13 @@ module.exports = (midiFileName) => {
     var mostRecentTempoChange = null
     var currentTick = 0
     var ticksPerQuarterNote = data.timeDivision
-    function ticksToMilliseconds(ticks, tempo) {
-        defaults(tempo, {
+    function ticksToMilliseconds(ticks, tempo = {}) {
+        tempo = defaults(tempo, {
             millisecondsPerQuarterNote: 400,
             start: 0,
             tick: 0
         })
-        const ticksSinceLastTempoChange = ticks - tempo.ticks
+        const ticksSinceLastTempoChange = ticks - tempo.tick
         return tempo.start + (ticksSinceLastTempoChange / ticksPerQuarterNote) * tempo.millisecondsPerQuarterNote
     }
     data.track.forEach(track => {
