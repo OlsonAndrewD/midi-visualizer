@@ -20,11 +20,13 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     const halfBlackKeyWidth = blackKeyWidth * 0.5
     const blackKeyHeight = keyboardHeight * 0.65
     const octaveWidth = whiteKeyEdgeWidth * 7
+    const sustainRectHeight = 10
 
     const xOctaveZero = 2 * whiteKeyEdgeWidth - octaveWidth
 
-    const draw = (ctx, playingNotes) => {
-        const noteLookup = keyBy(playingNotes, 'midiNoteNumber')
+    const draw = (ctx, { playingNotes, sustainingNotes }) => {
+        const playingNoteLookup = keyBy(playingNotes, 'midiNoteNumber')
+        const sustainingNoteLookup = keyBy(sustainingNotes, 'midiNoteNumber')
 
         ctx.fillStyle = "white"
         ctx.fillRect(0, keyboardTop, keyboardWidth, keyboardHeight)
@@ -35,13 +37,22 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         for (let index = 0; index < 52; index++) {
             const octave = Math.floor(index / 7)
             const midiNoteNumber = whiteKeyMidiNoteNumbers[index % 7] + octave * 12
-            if (noteLookup[midiNoteNumber]) {
-                ctx.fillStyle = noteLookup[midiNoteNumber].color
+            if (playingNoteLookup[midiNoteNumber]) {
+                ctx.fillStyle = playingNoteLookup[midiNoteNumber].color
                 ctx.fillRect(
                     index * whiteKeyEdgeWidth,
                     keyboardTop,
                     whiteKeyEdgeWidth,
                     keyboardHeight
+                )
+            }
+            if (sustainingNoteLookup[midiNoteNumber]) {
+                ctx.fillStyle = sustainingNoteLookup[midiNoteNumber].color
+                ctx.fillRect(
+                    index * whiteKeyEdgeWidth,
+                    keyboardTop,
+                    whiteKeyEdgeWidth,
+                    sustainRectHeight
                 )
             }
             ctx.strokeRect(
@@ -55,8 +66,13 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         ctx.fillStyle = "black"
 
         const drawBlackKey = (x, midiNoteNumber) => {
-            ctx.fillStyle = noteLookup[midiNoteNumber] ? noteLookup[midiNoteNumber].color : 'black'
+            ctx.fillStyle = playingNoteLookup[midiNoteNumber]?.color || 'black'
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight)
+            const sustainingNote = sustainingNoteLookup[midiNoteNumber]
+            if (sustainingNote) {
+                ctx.fillStyle = sustainingNote.color
+                ctx.fillRect(x, keyboardTop, blackKeyWidth, sustainRectHeight)
+            }
         }
 
         drawBlackKey(whiteKeyEdgeWidth - halfBlackKeyWidth, 22)
@@ -172,7 +188,7 @@ module.exports = (frames, width = 480, height = 360) => {
         ctx.fillStyle = "black"
         ctx.fillRect(0, 0, width, height)
 
-        keyboard.draw(ctx, frame.playingNotes)
+        keyboard.draw(ctx, frame)
 
         ctx.fillStyle = "white"
         frame.flyingNotes.forEach(note => {

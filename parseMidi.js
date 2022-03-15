@@ -20,7 +20,8 @@ module.exports = (midiFileName) => {
     //     console.log('———————')
     // })
     var notes = []
-    var currentNotes = {}
+    var playingNotes = {}
+    var sustainingNotes = []
     const allTempoChanges = []
     var nextTempoChanges = []
     var mostRecentTempoChange = null
@@ -36,8 +37,12 @@ module.exports = (midiFileName) => {
         return tempo.start + (ticksSinceLastTempoChange / ticksPerQuarterNote) * tempo.millisecondsPerQuarterNote
     }
     data.track.forEach(track => {
+        var sustainPedalIsDown = false
+
         track.event.forEach(event => {
             currentTick += event.deltaTime
+
+            // tempo
             if(event.metaType == 81) {
                 const newTempoChange = {
                     millisecondsPerQuarterNote: Math.round(event.data / 1000),
@@ -51,25 +56,47 @@ module.exports = (midiFileName) => {
             if(nextTempoChange && currentTick >= nextTempoChange.tick) {
                 mostRecentTempoChange = nextTempoChanges.shift()
             }
+
+            // sustain pedal
+            if(event.type == 11 && event.data[0] == 64) {
+                const sustainPedalIsLifting = sustainPedalIsDown && event.data[1] < 64
+                if (sustainPedalIsLifting) {
+                    sustainingNotes.forEach(note => {
+                        note.sustainEnd = ticksToMilliseconds(currentTick, mostRecentTempoChange)
+                    })
+                    sustainingNotes = []
+                }
+                sustainPedalIsDown = event.data[1] >= 64
+            }
+
+            // note on
             if(event.type == 9) {
-                currentNotes[event.data[0]] = {
-                    startTick: currentTick
+                playingNotes[event.data[0]] = {
+                    midiNoteNumber: event.data[0],
+                    start: ticksToMilliseconds(currentTick, mostRecentTempoChange),
                 }
             }
+
+            // note off
             if(event.type == 8) {
-                var currentNote = currentNotes[event.data[0]]
+                var currentNote = playingNotes[event.data[0]]
                 if(currentNote) {
-                    currentNote.endTick = currentTick
-                    notes.push({
-                        midiNoteNumber: event.data[0],
-                        start: ticksToMilliseconds(currentNote.startTick, mostRecentTempoChange),
-                        end: ticksToMilliseconds(currentNote.endTick, mostRecentTempoChange)
-                    })
-                    currentNotes[event.data[0]] = null
+                    currentNote.end = ticksToMilliseconds(currentTick, mostRecentTempoChange)
+                    notes.push(currentNote)
+                    if(sustainPedalIsDown) {
+                        sustainingNotes.push(currentNote)
+                    }
+                    delete playingNotes[event.data[0]]
                 }
             }
         })
-        currentNotes = {}
+        if (sustainingNotes.length) {
+            sustainingNotes.forEach(note => {
+                note.sustainEnd = ticksToMilliseconds(currentTick, mostRecentTempoChange)
+            })
+        }
+        playingNotes = {}
+        sustainingNotes = []
         currentTick = 0
         nextTempoChanges = [...allTempoChanges]
         mostRecentTempoChange = null

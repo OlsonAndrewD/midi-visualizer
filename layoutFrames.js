@@ -12,7 +12,8 @@ module.exports = ({ config, song }) => {
     const frames = Array(numFramesInNoteApproach + numFramesInSong).fill(0).map((x, frameIndex) => ({
         frameIndex,
         flyingNotes: [],
-        playingNotes: []
+        playingNotes: [],
+        sustainingNotes: []
     }))
 
     const frameNumberFor = songTime => Math.floor((songTime + noteApproachTime) / 1000 * fps)
@@ -20,7 +21,7 @@ module.exports = ({ config, song }) => {
     const frameOffsetPercent = songTime => -round2(songTime % frameLength / frameLength * noteProgressIncrementPerFrame)
 
     notes.forEach(note => {
-        const noteColor = "blue"
+        const noteColor = "cyan"
         const noteStartFrameOffset = frameOffsetPercent(note.start)
         const noteEndFrameOffset = frameOffsetPercent(note.end)
         const noteHeight = (note.end - note.start) / noteApproachTime
@@ -53,6 +54,17 @@ module.exports = ({ config, song }) => {
                 midiNoteNumber: note.midiNoteNumber,
                 color: noteColor
             })    
+        })
+
+        // Note sustaining
+        frames.slice(
+            frameNumberFor(note.end),
+            frameNumberFor(note.sustainEnd),
+        ).forEach((frame) => {
+            frame.sustainingNotes.push({
+                midiNoteNumber: note.midiNoteNumber,
+                color: noteColor
+            })
         })
     })
 
