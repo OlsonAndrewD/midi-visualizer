@@ -42,9 +42,10 @@ var configProps = [
     "height"
 ]
 
-if(existsSync("./midiconfig.json")) {
+const configFile = process.argv.slice(2)[0] || "./midiconfig.json"
+if(existsSync(configFile)) {
     try {
-        config = JSON.parse(readFileSync("./midiconfig.json", {encoding: "utf8"}))
+        config = JSON.parse(readFileSync(configFile, {encoding: "utf8"}))
         var shouldError = false
         configProps.forEach(prop => {
             if(!shouldError && !config[prop]) {
@@ -59,7 +60,7 @@ if(existsSync("./midiconfig.json")) {
         }
     } catch (err) {
         outputLine(196, 0, "Error: Could not parse config JSON.")
-        console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
+        console.error(err)
         process.exit(1)
     }
 } else {
@@ -67,6 +68,8 @@ if(existsSync("./midiconfig.json")) {
     console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
+
+const visualizer = require(`./visualizers/${config.visualizer.type}`)(config.visualizer.config)
 
 console.log('Parsing MIDI file...')
 var song
@@ -79,6 +82,8 @@ try {
     process.exit(1)
 }
 console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + "Parsing MIDI file... " + consoleStyles.greenDone)
+
+visualizer.prepareNotesForLayout && visualizer.prepareNotesForLayout(song.notes)
 
 console.log(`Laying out frames for ${song.notes.length} notes...`)
 var frames
@@ -95,7 +100,7 @@ console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + `Lay
 console.log(`Generating ${frames.length} frame images...`)
 var imageDirectory
 try {
-    imageDirectory = generateImages(frames, config.width, config.height)
+    imageDirectory = generateImages(visualizer.imageGenerator, config.backgroundColor, frames, config.width, config.height)
 } catch (err) {
     outputLine(196, 0, "Error: Couldn't draw frames.")
     console.error(err)

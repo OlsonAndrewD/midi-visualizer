@@ -1,6 +1,5 @@
 const { curryRight, last, round: lodashRound } = require('lodash')
 const round2 = curryRight(lodashRound)(2)
-const round4 = curryRight(lodashRound)(4)
 
 module.exports = ({ config, song }) => {
     const { fps, noteApproachTime } = config

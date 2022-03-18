@@ -1,0 +1,14 @@
+{
+    "fps": 30,
+    "noteApproachTime": 2000,
+    "midiFileName": "test-data/tempo-test.mid",
+    "width": 960,
+    "height": 720,
+    "backgroundColor": "black",
+    "visualizer": {
+        "type": "keyboard",
+        "config": {
+            "keyboardHeightProportion": 0.1
+        }
+    }
+}
