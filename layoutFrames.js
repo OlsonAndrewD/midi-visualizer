@@ -19,7 +19,6 @@ module.exports = ({ config, song }) => {
     const numFramesInNoteApproach = Math.round(noteApproachTime / 1000 * fps)
     const numFramesInNoteImpact = Math.round(noteImpactTime / 1000 * fps)
     const numFramesInEndPadding = Math.round(endPaddingTime / 1000 * fps)
-    console.log(numFramesInNoteApproach, numFramesInNoteImpact, numFramesInSong, numFramesInEndPadding)
     const frames = Array(numFramesInNoteApproach + numFramesInSong + numFramesInEndPadding).fill(0).map((x, frameIndex) => ({
         frameIndex,
         flyingNotes: [],
