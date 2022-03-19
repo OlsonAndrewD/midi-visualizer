@@ -1,22 +1,36 @@
-const { curryRight, last, round: lodashRound } = require('lodash')
+const { curryRight, last, round: lodashRound, sortBy } = require('lodash')
 const round2 = curryRight(lodashRound)(2)
 
 module.exports = ({ config, song }) => {
-    const { fps, noteApproachTime } = config
+    const {
+        endPaddingTime = 3000,
+        fps,
+        noteApproachTime = 1000,
+        noteImpactTime = 500
+    } = config
     const { notes = [] } = song
 
     const frameLength = 1000 / fps
-    const numFramesInSong = Math.ceil(last(notes).end / 1000 * fps)
+    const numFramesInSong = ((lastNote) => {
+        const end = lastNote.sustainEnd || lastNote.end
+        const impactEnd = lastNote.start + noteImpactTime
+        return Math.ceil(Math.max(end, impactEnd) / 1000 * fps)
+    })(last(sortBy(notes, 'end')))
     const numFramesInNoteApproach = Math.round(noteApproachTime / 1000 * fps)
-    const frames = Array(numFramesInNoteApproach + numFramesInSong).fill(0).map((x, frameIndex) => ({
+    const numFramesInNoteImpact = Math.round(noteImpactTime / 1000 * fps)
+    const numFramesInEndPadding = Math.round(endPaddingTime / 1000 * fps)
+    console.log(numFramesInNoteApproach, numFramesInNoteImpact, numFramesInSong, numFramesInEndPadding)
+    const frames = Array(numFramesInNoteApproach + numFramesInSong + numFramesInEndPadding).fill(0).map((x, frameIndex) => ({
         frameIndex,
         flyingNotes: [],
         playingNotes: [],
+        noteImpacts: [],
         sustainingNotes: []
     }))
 
     const frameNumberFor = songTime => Math.floor((songTime + noteApproachTime) / 1000 * fps)
     const noteProgressIncrementPerFrame = 1 / numFramesInNoteApproach
+    const noteImpactProgressIncrementPerFrame = 1 / numFramesInNoteImpact
     const frameOffsetPercent = songTime => -round2(songTime % frameLength / frameLength * noteProgressIncrementPerFrame)
 
     notes.forEach(note => {
@@ -35,6 +49,18 @@ module.exports = ({ config, song }) => {
                 startProgress: Math.min(1, round2(noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame)),
                 endProgress: Math.min(1, round2(noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)),
                 color: noteColor
+            })
+        })
+
+        // Note impact animation
+        frames.slice(
+            frameNumberFor(note.start),
+            frameNumberFor(note.start + noteImpactTime),
+        ).forEach((frame, frameIndex) => {
+            frame.noteImpacts.push({
+                ...note,
+                progress: round2(frameIndex * noteImpactProgressIncrementPerFrame),
+                color: noteColor,
             })
         })
 

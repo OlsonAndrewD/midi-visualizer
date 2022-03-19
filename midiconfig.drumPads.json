@@ -1,6 +1,6 @@
 {
     "fps": 60,
-    "noteApproachTime": 2000,
+    "noteApproachTime": 1000,
     "midiFileName": "test-data/drum test.mid",
     "width": 960,
     "height": 360,
@@ -15,23 +15,20 @@
                     "color": "red"
                 },
                 {
-                    "name": "Kick",
-                    "color": "red"
-                },
-                {
                     "name": "Snare",
-                    "color": "blue"
+                    "color": "cyan"
                 }
             ],
             "midiNoteNumberAssignments": {
                 "33": { "padIndex": 0 },
-                "34": { "padIndex": 1, "color": "green" },
-                "35": { "padIndex": 2 }
+                "34": { "padIndex": 0, "color": "green" },
+                "35": { "padIndex": 1 }
             },
             "flyFrom": {
                 "x": 0.5,
                 "y": 0
-            }
+            },
+            "impactSize": 75
         }
     }
 }

@@ -253,4 +253,23 @@ describe("frame layout", () => {
             playingNotes: [{ midiNoteNumber: 127 }]
         })
     })
+
+    fit("animates a note's impact", () => {
+        const frames = layoutFrames({
+            config: {
+                fps: 10,
+                noteApproachTime: 1000,
+            },
+            song: {
+                notes: [
+                    {
+                        start: 0,
+                        end: 1000,
+                        midiNoteNumber: 0,
+                    }
+                ]
+            }
+        })
+        frames.forEach(frame => console.log(frame))
+    })
 })

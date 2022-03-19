@@ -1,6 +1,7 @@
 const { set, reverse } = require("lodash")
+const rgba = require('color-rgba')
 
-module.exports = ({ padHeight, pads, midiNoteNumberAssignments, flyFrom }) => ({
+module.exports = ({ padHeight, pads, midiNoteNumberAssignments, flyFrom, impactSize = 50 }) => ({
     prepareNotesForLayout: (notes) => {
         notes.forEach(note => note.end = note.start + 100)
     },
@@ -59,6 +60,8 @@ module.exports = ({ padHeight, pads, midiNoteNumberAssignments, flyFrom }) => ({
                         )
                     }
                 })
+
+                ctx.shadowBlur = 0
             }
 
             return {
@@ -67,6 +70,7 @@ module.exports = ({ padHeight, pads, midiNoteNumberAssignments, flyFrom }) => ({
                     ctx.strokeStyle = 'black'
                     ctx.lineWidth = 1
 
+                    // flying notes
                     const { flyingNotes } = frame
                     const reversed = reverse([
                         ...flyingNotes
@@ -104,7 +108,36 @@ module.exports = ({ padHeight, pads, midiNoteNumberAssignments, flyFrom }) => ({
                             )
                         }
                     })
+
+                    // pads and playing notes
                     drawPads(ctx, frame)
+
+                    // note impact shockwaves
+                    ctx.lineWidth = 2
+                    const { noteImpacts } = frame
+                    noteImpacts.forEach(({ midiNoteNumber, progress }) => {
+                        const assignment = midiNoteNumberAssignments[midiNoteNumber] || {}
+                        const { padIndex = -1 } = assignment
+                        if (padIndex >= 0) {
+                            const [r, g, b] = rgba(assignment.color || pads[padIndex].color)
+                            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
+
+                            const destinationPad = padsWithLocations[padIndex]
+                            const easingProgress = -Math.pow(2, -10 * progress) + 1
+                            const impactRectangle = {
+                                x: destinationPad.x - 0.2 * progress * impactSize * easingProgress,
+                                y: destinationPad.y - progress * impactSize * easingProgress,
+                                width: destinationPad.width + 0.4 * impactSize * progress * easingProgress,
+                                height: destinationPad.height + impactSize * progress * easingProgress,
+                            }
+                            ctx.fillRect(
+                                impactRectangle.x,
+                                impactRectangle.y,
+                                impactRectangle.width,
+                                impactRectangle.height
+                            )
+                        }
+                    })
                 }
             }
         }
