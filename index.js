@@ -64,7 +64,7 @@ if(existsSync(configFile)) {
         process.exit(1)
     }
 } else {
-    outputLine(196, 0, "Error: midiconfig.json does not exist in local directory.")
+    outputLine(196, 0, `Error: ${configFile} does not exist.`)
     console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
