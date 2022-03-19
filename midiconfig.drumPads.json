@@ -1,5 +1,5 @@
 {
-    "fps": 60,
+    "fps": 30,
     "noteApproachTime": 1000,
     "midiFileName": "test-data/drum test.mid",
     "width": 960,
@@ -9,20 +9,15 @@
         "type": "drumPads",
         "config": {
             "padHeight": 200,
-            "pads": [
-                {
-                    "name": "Kick",
-                    "color": "red"
-                },
-                {
-                    "name": "Snare",
-                    "color": "cyan"
-                }
-            ],
-            "midiNoteNumberAssignments": {
-                "33": { "padIndex": 0 },
-                "34": { "padIndex": 0, "color": "green" },
-                "35": { "padIndex": 1 }
+            "noteColors": {
+                "33": "red",
+                "34": "green",
+                "35": "cyan"
+            },
+            "padAssignments": {
+                "33": 0,
+                "34": 0,
+                "35": 1
             },
             "flyFrom": {
                 "x": 0.5,
