@@ -24,9 +24,13 @@ module.exports = (imageGenerator, backgroundColor, frames, width = 480, height =
         drawFrame(ctx, frame)
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
         writeFileSync(`./frames/frame${('' + i).padStart(7, '0')}.png`, b64, "base64")
-        var progressWidth = process.stdout.columns - 4
+        var progressWidth = process.stdout.columns
         var progressChars = Math.floor((i / frames.length) * progressWidth)
-        console.log(`\x1b[1A\x1b[2K\r\x1b[36m${"█".repeat(progressChars)}${"░".repeat(progressWidth - progressChars)}\x1b[0m ${Math.floor((i / frames.length) * 100).toString().padStart(2, " ")}%`)
+        if(progressChars - 3 < 0) {
+            console.log(`\x1b[1A\x1b[2K\r\x1b[36m${"█".repeat(progressChars)}\x1b[0m${Math.floor((i / frames.length) * 100)}%\x1b[0m\x1b[36m${"░".repeat((progressWidth - progressChars) - (Math.floor((i / frames.length) * 100).toString().length + 1))}\x1b[0m`)
+        } else {
+            console.log(`\x1b[1A\x1b[2K\r\x1b[36m${"█".repeat(progressChars - 3)}\x1b[0m\x1b[46m\x1b[38;2;255;255;255m${Math.floor((i / frames.length) * 100).toString().padStart(2, " ")}%\x1b[0m\x1b[36m${"░".repeat(progressWidth - progressChars)}\x1b[0m`)
+        }
         // console.log(`\x1b[1A\x1b[2K\rDone with ${i}/${frames.length} frames...`)
     })
 
