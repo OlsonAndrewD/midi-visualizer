@@ -85,12 +85,12 @@ console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + "Par
 
 visualizer.prepareNotesForLayout && visualizer.prepareNotesForLayout(song.notes)
 
-console.log(`Laying out frames for ${song.notes.length} notes...`)
+console.log(`Laying out and coloring frames for ${song.notes.length} notes...`)
 var frames
 try {
     frames = layoutFrames({config, song})
 } catch (err) {
-    outputLine(196, 0, "Error: Laying out frames failed.")
+    outputLine(196, 0, "Error: Laying out or coloring frames failed.")
     console.error(err)
     console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)

@@ -36,7 +36,7 @@ module.exports = (midiFileName) => {
         const ticksSinceLastTempoChange = ticks - tempo.tick
         return tempo.start + (ticksSinceLastTempoChange / ticksPerQuarterNote) * tempo.millisecondsPerQuarterNote
     }
-    data.track.forEach(track => {
+    data.track.forEach((track, trackIndex) => {
         var sustainPedalIsDown = false
 
         track.event.forEach(event => {
@@ -74,6 +74,7 @@ module.exports = (midiFileName) => {
                 playingNotes[event.data[0]] = {
                     midiNoteNumber: event.data[0],
                     start: ticksToMilliseconds(currentTick, mostRecentTempoChange),
+                    track: trackIndex
                 }
             }
 

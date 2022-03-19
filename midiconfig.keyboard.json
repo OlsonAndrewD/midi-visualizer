@@ -10,5 +10,9 @@
         "config": {
             "keyboardHeightProportion": 0.1
         }
+    },
+    "colorizer": {
+        "type": "noteRainbow",
+        "config": {}
     }
 }
