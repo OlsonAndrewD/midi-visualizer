@@ -1,0 +1,60 @@
+{
+    "fps": 30,
+    "noteApproachTime": 1000,
+    "midiFileName": "test-data/drums.mid",
+    "width": 960,
+    "height": 360,
+    "backgroundColor": "black",
+    "visualizer": {
+        "type": "drumPads",
+        "config": {
+            "padHeight": 200,
+            "noteMap": {
+                "36": "Kick 1",
+                "35": "Kick 2",
+                "38": "Snare",
+                "57": "Crash Right",
+                "55": "Crash Left",
+                "60": "HH Closed Tight",
+                "61": "HH Closed",
+                "62": "HH Open 1",
+                "63": "HH Open 2",
+                "64": "HH Open 3",
+                "72": "HH Pedal"
+            },
+            "colors": {
+                "default": "white",
+                "Kick 1": "red",
+                "Kick 2": "maroon",
+                "Snare": "white",
+                "Crash Right": "cyan",
+                "Crash Left": "cyan",
+                "HH Closed Tight": "purple",
+                "HH Closed": "purple",
+                "HH Open 1": "#FF00FF",
+                "HH Open 2": "#FF00FF",
+                "HH Open 3": "#FF00FF",
+                "HH Pedal": "purple"
+            },
+            "padOrder": [
+                ["Crash Left"],
+                [
+                    "HH Closed Tight",
+                    "HH Closed",
+                    "HH Open 1",
+                    "HH Open 2",
+                    "HH Open 3",
+                    "HH Pedal"
+                ],
+                ["Kick 1", "Kick 2"],
+                ["Snare"],
+                ["Crash Right"]
+            ],
+            "flyFrom": {
+                "x": 0.5,
+                "y": 0
+            },
+            "impactSize": 75
+        }
+    }
+}

@@ -1,14 +1,31 @@
-const { set, reverse, map, max } = require("lodash")
+const { set, reduce, reverse } = require("lodash")
 const rgba = require('color-rgba')
 
 module.exports = ({
+    noteMap,
     padHeight,
-    padAssignments,
-    noteColors,
+    padOrder,
+    colors,
     flyFrom,
     impactSize = 50
 }) => {
-    const getNoteColor = ({ midiNoteNumber }) => noteColors[midiNoteNumber]
+    const getMidiNoteNumber = (() => {
+        const lookup = reduce(
+            noteMap,
+            (result, noteName, noteNumber) => {
+                return set(result, noteName, noteNumber)
+            },
+            {}
+        )
+        return noteName => lookup[noteName]
+    })()
+    const padAssignments = padOrder.reduce((assignments, nextPadAssignments, padIndex) => {
+        nextPadAssignments.forEach(noteName => {
+            assignments[getMidiNoteNumber(noteName)] = padIndex
+        })
+        return assignments
+    }, {})
+    const getNoteColor = ({ midiNoteNumber }) => colors[noteMap[midiNoteNumber] || 'unknown'] || colors.default
 
     return ({
         prepareNotesForLayout: (notes) => {
@@ -17,7 +34,7 @@ module.exports = ({
         imageGenerator: {
             init: (width, height) => {
                 const spacing = 10
-                const numberOfPads = max(map(padAssignments)) + 1
+                const numberOfPads = padOrder.length
                 const padWidth = (width - spacing * (numberOfPads + 1)) / numberOfPads
                 const padY = height - spacing - padHeight
                 const padLocations = Array(numberOfPads).fill(0).map((_, index) => ({
@@ -79,6 +96,9 @@ module.exports = ({
                         const reversed = reverse([
                             ...flyingNotes
                         ])
+                        // if (flyingNotes.length) {
+                        //     console.log(flyingNotes[0])
+                        // }
                         reversed.forEach(note => {
                             const padIndex = padAssignments[note.midiNoteNumber]
                             if (padIndex >= 0) {
