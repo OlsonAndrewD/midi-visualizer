@@ -1,4 +1,5 @@
 const { keyBy, reverse } = require("lodash")
+const rgba = require('color-rgba')
 
 const whiteKeyMidiNoteNumbers = [
     21, // A0
@@ -232,7 +233,7 @@ const drawNote3d = (flyInHeight, flyFrom, width, height, keyboardHeight) => {
     }
 }
 
-module.exports = ({ keyboardHeightProportion = 0.1, flyFrom }) => ({
+module.exports = ({ keyboardHeightProportion = 0.1, flyFrom, impactSize = 60 }) => ({
     imageGenerator: {
         init: (width = 480, height = 360) => {
             const keyboardHeight = height * (keyboardHeightProportion)
@@ -248,6 +249,7 @@ module.exports = ({ keyboardHeightProportion = 0.1, flyFrom }) => ({
                 : drawNote2d(flyInHeight)
 
             const drawFrame = (ctx, frame) => {
+                // flying notes
                 const { flyingNotes } = frame
                 const reversed = reverse([
                     ...flyingNotes
@@ -259,6 +261,36 @@ module.exports = ({ keyboardHeightProportion = 0.1, flyFrom }) => ({
                         drawNote(note, notePosition, ctx)
                     }
                 })
+
+                // note impact shockwaves
+                ctx.lineWidth = 2
+                const { noteImpacts } = frame
+                noteImpacts.forEach((noteImpact) => {
+                    const { midiNoteNumber, progress } = noteImpact
+                    const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
+                    if (notePosition) {
+                        const [r, g, b] = rgba(noteImpact.color)
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
+
+                        const easingProgress = 1 // -Math.pow(2, -10 * progress) + 1
+                        const impactCircle = {
+                            x: notePosition.xOffset + 0.5 * notePosition.width,
+                            y: flyInHeight,
+                            r: notePosition.width + 0.5 * impactSize * progress * easingProgress,
+                        }
+                        ctx.beginPath()
+                        ctx.arc(
+                            impactCircle.x,
+                            impactCircle.y,
+                            impactCircle.r,
+                            0,
+                            2 * Math.PI
+                        )
+                        ctx.fill()
+                    }
+                })
+
+                // keyboard and playing/sustained notes
                 keyboard.draw(ctx, frame)
             }
 

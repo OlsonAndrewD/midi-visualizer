@@ -1,6 +1,8 @@
 {
     "fps": 30,
     "noteApproachTime": 2000,
+    "noteImpactTime": 500,
+    "impactSize": 400,
     "midiFileName": "test-data/test.mid",
     "width": 960,
     "height": 360,
