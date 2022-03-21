@@ -1,4 +1,4 @@
-const { keyBy } = require("lodash")
+const { keyBy, reverse } = require("lodash")
 
 const whiteKeyMidiNoteNumbers = [
     21, // A0
@@ -171,7 +171,68 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     }
 })
 
-module.exports = ({ keyboardHeightProportion = 0.1 }) => ({
+const drawNote2d = (flyInHeight) => (note, notePosition, ctx) => {
+    ctx.fillRect(
+        notePosition.xOffset,
+        note.endProgress * flyInHeight,
+        notePosition.width,
+        note.startProgress * flyInHeight - note.endProgress * flyInHeight
+    )
+}
+
+const drawNote3d = (flyInHeight, flyFrom, width, height, keyboardHeight) => {
+    const startingPoint = {
+        x: width * flyFrom.x,
+        y: height * flyFrom.y
+    }
+    const easing = x => Math.pow(2, 10 * (x - 1))
+
+    return (note, notePosition, ctx) => {
+        const flyingNoteLocation = {
+            front: {
+                x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * easing(note.startProgress),
+                y: startingPoint.y + (flyInHeight - startingPoint.y) * easing(note.startProgress),
+                width: notePosition.width * easing(note.startProgress),
+                height: 0.2 * keyboardHeight * easing(note.startProgress)
+            },
+            back: {
+                x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * easing(note.endProgress),
+                y: startingPoint.y + (flyInHeight - startingPoint.y) * easing(note.endProgress),
+                width: notePosition.width * easing(note.endProgress),
+                height: 0.2 * keyboardHeight * easing(note.endProgress)
+            },
+        }
+
+        ctx.fillRect(
+            flyingNoteLocation.front.x,
+            flyingNoteLocation.front.y,
+            flyingNoteLocation.front.width,
+            flyingNoteLocation.front.height
+        )
+        ctx.fillRect(
+            flyingNoteLocation.back.x,
+            flyingNoteLocation.back.y,
+            flyingNoteLocation.back.width,
+            flyingNoteLocation.back.height
+        )
+        ctx.beginPath()
+        if (flyingNoteLocation.front.x < startingPoint.x) {
+            ctx.moveTo(flyingNoteLocation.front.x, flyingNoteLocation.front.y)
+            ctx.lineTo(flyingNoteLocation.back.x, flyingNoteLocation.back.y)
+            ctx.lineTo(flyingNoteLocation.back.x + flyingNoteLocation.back.width, flyingNoteLocation.back.y + flyingNoteLocation.back.height)
+            ctx.lineTo(flyingNoteLocation.front.x + flyingNoteLocation.front.width, flyingNoteLocation.front.y + flyingNoteLocation.front.height)
+        }
+        else {
+            ctx.moveTo(flyingNoteLocation.front.x, flyingNoteLocation.front.y + flyingNoteLocation.front.height)
+            ctx.lineTo(flyingNoteLocation.back.x, flyingNoteLocation.back.y + flyingNoteLocation.back.height)
+            ctx.lineTo(flyingNoteLocation.back.x + flyingNoteLocation.back.width, flyingNoteLocation.back.y)
+            ctx.lineTo(flyingNoteLocation.front.x + flyingNoteLocation.front.width, flyingNoteLocation.front.y)
+        }
+        ctx.fill()
+    }
+}
+
+module.exports = ({ keyboardHeightProportion = 0.1, flyFrom }) => ({
     imageGenerator: {
         init: (width = 480, height = 360) => {
             const keyboardHeight = height * (keyboardHeightProportion)
@@ -182,25 +243,23 @@ module.exports = ({ keyboardHeightProportion = 0.1 }) => ({
                 width,
             })
 
-            const drawFrame = (ctx, frame) => {
-                keyboard.draw(ctx, frame)
+            const drawNote = flyFrom
+                ? drawNote3d(flyInHeight, flyFrom, width, height, keyboardHeight)
+                : drawNote2d(flyInHeight)
 
-                ctx.fillStyle = "white"
-                frame.flyingNotes.forEach(note => {
+            const drawFrame = (ctx, frame) => {
+                const { flyingNotes } = frame
+                const reversed = reverse([
+                    ...flyingNotes
+                ])
+                reversed.forEach(note => {
                     ctx.fillStyle = note.color
                     const notePosition = keyboard.getFlyingNotePosition(note.midiNoteNumber)
                     if (notePosition) {
-                        // if (note.startProgress > 1) {
-                        //     console.log('startProgress', startProgress)
-                        // }
-                        ctx.fillRect(
-                            notePosition.xOffset,
-                            note.endProgress * flyInHeight,
-                            notePosition.width,
-                            note.startProgress * flyInHeight - note.endProgress * flyInHeight
-                        )
+                        drawNote(note, notePosition, ctx)
                     }
                 })
+                keyboard.draw(ctx, frame)
             }
 
             return { drawFrame }
