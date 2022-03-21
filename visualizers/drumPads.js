@@ -96,9 +96,6 @@ module.exports = ({
                         const reversed = reverse([
                             ...flyingNotes
                         ])
-                        // if (flyingNotes.length) {
-                        //     console.log(flyingNotes[0])
-                        // }
                         reversed.forEach(note => {
                             const padIndex = padAssignments[note.midiNoteNumber]
                             if (padIndex >= 0) {
