@@ -292,6 +292,26 @@ module.exports = ({ keyboardHeightProportion = 0.1, flyFrom, impactSize = 60 }) 
 
                 // keyboard and playing/sustained notes
                 keyboard.draw(ctx, frame)
+
+                // particle effects
+                const { particles } = frame
+                particles.forEach(particle => {
+                    const { midiNoteNumber, progress, direction, color } = particle
+                    const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
+                    if(notePosition) {
+                        const origin = {
+                            x: notePosition.xOffset + (notePosition.width / 2),
+                            y: flyInHeight
+                        }
+                        const angle = direction * Math.PI // in radians
+                        const particleCoords = {
+                            x: origin.x + Math.cos(angle) * progress * 100,
+                            y: origin.y - Math.sin(angle) * progress * 100
+                        }
+                        ctx.fillStyle = color
+                        ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
+                    }
+                })
             }
 
             return { drawFrame }

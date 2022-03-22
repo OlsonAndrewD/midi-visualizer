@@ -9,7 +9,7 @@ module.exports = ({ config, song }) => {
         noteApproachTime = 1000,
         noteImpactTime = 500,
         particles: {
-            perFrame: particlesPerFrame = 4,
+            perFrame: particlesPerFrame = 10,
             lifetime: particleLifetime = 2000,
             // angleSpread: particleAngleSpread = 0.5,
             // distanceMultiplier: particleDistanceMultiplier = 0.8,
