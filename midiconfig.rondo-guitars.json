@@ -1,0 +1,37 @@
+{
+    "fps": 30,
+    "noteApproachTime": 2000,
+    "noteImpactTime": 500,
+    "impactSize": 400,
+    "midiFileName": "test-data/guitars.mid",
+    "width": 960,
+    "height": 360,
+    "backgroundColor": "black",
+    "visualizer": {
+        "type": "keyboard",
+        "keyboardHeightProportion": 0.2,
+        "flyFrom": {
+            "x": 0.5,
+            "y": 0
+        }
+    },
+    "colorizer": {
+        "type": "trackRainbow",
+        "colors": [
+            "cyan",
+            "lightgreen",
+            "red"
+        ],
+        "startingTrack": 1,
+        "keyswitches": [
+            {
+                "midiNoteNumber": 12,
+                "color": null
+            },
+            {
+                "midiNoteNumber": 13,
+                "color": "magenta"
+            }
+        ]
+    }
+}
