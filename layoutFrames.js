@@ -43,7 +43,7 @@ module.exports = ({ config, song }) => {
     const particleProgressIncrementPerFrame = 1 / numFramesInParticleLifetime
     const frameOffsetPercent = songTime => -round2(songTime % frameLength / frameLength * noteProgressIncrementPerFrame)
 
-    const colorize = colorizer ? require(`./${path.join("colorizers", colorizer.type)}`)(colorizer.config) : () => "white"
+    const colorize = colorizer ? require(`./${path.join("colorizers", colorizer.type)}`)(colorizer) : () => "white"
 
     notes.forEach(note => {
         const noteColor = colorize(pick(note, ["midiNoteNumber", "track"]))

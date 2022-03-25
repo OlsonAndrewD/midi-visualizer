@@ -7,27 +7,25 @@
     "backgroundColor": "black",
     "visualizer": {
         "type": "drumPads",
-        "config": {
-            "padHeight": 200,
-            "noteMap": {
-                "33": "drum 1",
-                "34": "drum 2",
-                "35": "drum 3"
-            },
-            "colors": {
-                "drum 1": "red",
-                "drum 2": "green",
-                "drum 3": "cyan"
-            },
-            "padOrder": [
-                ["drum 1", "drum 2"],
-                ["drum 3"]
-            ],
-            "flyFrom": {
-                "x": 0.5,
-                "y": 0
-            },
-            "impactSize": 75
-        }
+        "padHeight": 200,
+        "noteMap": {
+            "33": "drum 1",
+            "34": "drum 2",
+            "35": "drum 3"
+        },
+        "colors": {
+            "drum 1": "red",
+            "drum 2": "green",
+            "drum 3": "cyan"
+        },
+        "padOrder": [
+            ["drum 1", "drum 2"],
+            ["drum 3"]
+        ],
+        "flyFrom": {
+            "x": 0.5,
+            "y": 0
+        },
+        "impactSize": 75
     }
 }

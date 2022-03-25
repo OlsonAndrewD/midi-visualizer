@@ -69,7 +69,7 @@ if(existsSync(configFile)) {
     process.exit(1)
 }
 
-const visualizer = require(`./visualizers/${config.visualizer.type}`)(config.visualizer.config)
+const visualizer = require(`./visualizers/${config.visualizer.type}`)(config.visualizer)
 
 console.log('Parsing MIDI file...')
 var song
