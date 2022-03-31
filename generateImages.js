@@ -21,7 +21,7 @@ module.exports = (imageGenerator, backgroundColor, frames, width = 480, height =
 
     frames.forEach((frame, i) => {
         initFrame(ctx, width, height, backgroundColor)
-        drawFrame(ctx, frame)
+        drawFrame(ctx, frame, i)
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
         writeFileSync(`./frames/frame${('' + i).padStart(7, '0')}.png`, b64, "base64")
         var progressWidth = process.stdout.columns

@@ -9,7 +9,11 @@
     "backgroundColor": "black",
     "visualizer": {
         "type": "keyboard",
-        "keyboardHeightProportion": 0.2
+        "keyboardHeightProportion": 0.2,
+        "flyFrom": {
+            "x": 0.5,
+            "y": 0
+        }
     },
     "colorizer": {
         "type": "trackRainbow"
