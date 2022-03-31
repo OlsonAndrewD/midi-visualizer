@@ -277,11 +277,14 @@ module.exports = ({ keyboardHeightProportion = 0.1, flyFrom, impactSize = 60 }) 
                 reversed.forEach(note => {
                     ctx.strokeStyle = note.color
                     ctx.fillStyle = note.color
+                    ctx.shadowColor = note.color
+                    ctx.shadowBlur = note.isPlaying ? 10 : 0
                     const notePosition = keyboard.getFlyingNotePosition(note.midiNoteNumber)
                     if (notePosition) {
                         drawNote(note, notePosition, ctx, frameIndex)
                     }
                 })
+                ctx.shadowBlur = 0
 
                 // note impact shockwaves
                 ctx.lineWidth = 2

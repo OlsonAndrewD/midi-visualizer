@@ -85,7 +85,8 @@ module.exports = ({ config, song }) => {
                 midiNoteNumber: note.midiNoteNumber,
                 startProgress: Math.min(1, round2(1 + noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame)),
                 endProgress: Math.min(1, round2(1 + noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)),
-                color: noteColor
+                color: noteColor,
+                isPlaying: true
             })
             frame.playingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
