@@ -16,21 +16,61 @@
         }
     },
     "colorizer": {
-        "type": "trackRainbow",
-        "colors": [
-            "cyan",
-            "lightgreen",
-            "red"
-        ],
-        "startingTrack": 1,
-        "keyswitches": [
+        "type": "byTrack",
+        "tracks": [
             {
-                "midiNoteNumber": 12,
-                "color": null
+                "name": "tempo -- skip"
             },
             {
-                "midiNoteNumber": 13,
-                "color": "magenta"
+                "name": "Guitar 1",
+                "color": "cyan",
+                "keyswitches": [
+                    {
+                        "name": "tapping",
+                        "midiNoteNumber": 17,
+                        "color": "#7FFFD4"
+                    }
+                ]
+            },
+            {
+                "name": "Guitar 2",
+                "color": "green"
+            },
+            {
+                "name": "Guitar 3",
+                "color": "#7f0000",
+                "keyswitches": [
+                    {
+                        "name": "sustain",
+                        "midiNoteNumber": 12,
+                        "color": null
+                    },
+                    {
+                        "name": "power chord sustain",
+                        "midiNoteNumber": 13,
+                        "color": "#ff0000"
+                    },
+                    {
+                        "name": "staccato",
+                        "midiNoteNumber": 14,
+                        "color": null
+                    },
+                    {
+                        "name": "power chord staccato",
+                        "midiNoteNumber": 15,
+                        "color": "#ff0000"
+                    },
+                    {
+                        "name": "fx",
+                        "midiNoteNumber": 19,
+                        "color": "magenta"
+                    },
+                    {
+                        "name": "choke",
+                        "midiNoteNumber": 21,
+                        "color": "brown"
+                    }
+                ]
             }
         ]
     }

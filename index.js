@@ -4,6 +4,7 @@ const generateImages = require('./generateImages')
 const createVideo = require('./createVideo')
 const outputLine = require('./consoleColors')
 const {existsSync, readFileSync} = require("fs")
+const { orderBy } = require('lodash')
 
 const consoleStyles = {
     hideCursor: "\x1b[?25l",
@@ -82,6 +83,8 @@ try {
     process.exit(1)
 }
 console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + "Parsing MIDI file... " + consoleStyles.greenDone)
+
+song.notes = orderBy(song.notes, ['start', 'midiNoteNumber'])
 
 visualizer.prepareNotesForLayout && visualizer.prepareNotesForLayout(song.notes)
 
