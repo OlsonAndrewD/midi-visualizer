@@ -200,7 +200,9 @@ const drawNote3d = (flyInHeight, flyFrom, width, height, keyboardHeight) => {
     }
 
     const drawCurveSegment = (ctx, lineTo, points, t1, t2) => {
-        const numLines = 10
+        t1 = Math.max(0, Math.min(1, t1))
+        t2 = Math.max(0, Math.min(1, t2))
+        const numLines = 14
         const stepSize = 1 / numLines * (t2 - t1)
         const coordinates = Array(numLines).fill().map((_, index) =>
             calculateCurvePoint(points, t1 + index * stepSize)
