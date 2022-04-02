@@ -27,5 +27,8 @@
             "y": 0
         },
         "impactSize": 75
+    },
+    "particles": {
+        "perFrame": 50
     }
 }

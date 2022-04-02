@@ -158,6 +158,28 @@ module.exports = ({
                                 )
                             }
                         })
+
+                        // particles
+                        const { particles } = frame
+                        particles.forEach(particle => {
+                            const { midiNoteNumber, origin: particleOrigin, progress, direction, color } = particle
+                            const padIndex = padAssignments[midiNoteNumber]
+                            if (padIndex >= 0) {
+                                const destinationPad = padLocations[padIndex]
+                                const origin = {
+                                    x: destinationPad.x + particleOrigin * destinationPad.width,
+                                    y: destinationPad.y
+                                }
+                                const angle = direction * Math.PI // in radians
+                                const particleCoords = {
+                                    x: origin.x + Math.cos(angle) * progress * 100,
+                                    y: origin.y - Math.sin(angle) * progress * 100
+                                }
+                                const [r, g, b] = rgba(getNoteColor(particle))
+                                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
+                                ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
+                            }
+                        })
                     }
                 }
             }
