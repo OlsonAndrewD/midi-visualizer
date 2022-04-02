@@ -7,8 +7,8 @@ function initFrame(ctx, width, height, backgroundColor) {
     ctx.fillRect(0, 0, width, height)
 }
 
-module.exports = (imageGenerator, backgroundColor, frames, width = 480, height = 360) => {
-    const { drawFrame } = imageGenerator.init(width, height)
+module.exports = (drawFrame, frames, config) => {
+    const { backgroundColor, width = 480, height = 360 } = config
 
     /** @type {HTMLCanvasElement} */
     var canvas = createCanvas(width, height)

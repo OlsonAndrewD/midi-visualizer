@@ -2,18 +2,26 @@
     "fps": 30,
     "noteApproachTime": 2000,
     "noteImpactTime": 500,
-    "impactSize": 400,
+    "impactSize": 60,
     "midiFileName": "test-data/guitars.mid",
     "width": 960,
     "height": 360,
     "backgroundColor": "black",
+    "flyIn": {
+        "type": "3d",
+        "shape": "bezierCurve",
+        "startingPoint": {
+            "x": 0.5,
+            "y": 0,
+            "oscillation": {
+                "periodInSeconds": 10,
+                "width": 0.8
+            }
+        }
+    },
     "visualizer": {
         "type": "keyboard",
-        "keyboardHeightProportion": 0.2,
-        "flyFrom": {
-            "x": 0.5,
-            "y": 0
-        }
+        "keyboardHeightProportion": 0.2
     },
     "colorizer": {
         "type": "byTrack",

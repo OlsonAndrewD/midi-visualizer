@@ -172,7 +172,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     }
 })
 
-const drawNote2d = (flyInHeight) => (note, notePosition, ctx) => {
+const drawNote2d = ({ flyInHeight }) => (note, notePosition, ctx) => {
     ctx.fillRect(
         notePosition.xOffset,
         note.endProgress * flyInHeight,
@@ -181,167 +181,249 @@ const drawNote2d = (flyInHeight) => (note, notePosition, ctx) => {
     )
 }
 
-const drawNote3d = (flyInHeight, flyFrom, width, height, keyboardHeight) => {
-    const easing = x => x * x * x // x => Math.pow(2, 10 * (x - 1))
+const drawNote3d = ({
+    flyInHeight,
+    startingPoint = {
+        x: 0.5,
+        y: 0,
+    },
+    shape = 'straight',
+    width,
+    height
+}) => {
+    const startingPointY = height * startingPoint.y
+    const { oscillation } = startingPoint
 
-    const calculateCurvePoint = (points, t) => {
-        if (points.length === 1) {
-            return points[0]
+    const bezierCurve = () => {
+        const easing = x => x * x * x // x => Math.pow(2, 10 * (x - 1))
+
+        const calculateCurvePoint = (points, t) => {
+            if (points.length === 1) {
+                return points[0]
+            }
+            t = easing(t)
+            const newPoints = []
+            for (let i = 0; i < points.length - 1; i++) {
+                newPoints.push({
+                    x: (1 - t) * points[i].x + t * points[i + 1].x,
+                    y: (1 - t) * points[i].y + t * points[i + 1].y,
+                })
+            }
+            return calculateCurvePoint(newPoints, t)
         }
-        t = easing(t)
-        const newPoints = []
-        for (let i = 0; i < points.length - 1; i++) {
-            newPoints.push({
-                x: (1 - t) * points[i].x + t * points[i + 1].x,
-                y: (1 - t) * points[i].y + t * points[i + 1].y,
+
+        const drawCurveSegment = (ctx, lineTo, points, t1, t2) => {
+            t1 = Math.max(0, Math.min(1, t1))
+            t2 = Math.max(0, Math.min(1, t2))
+            const numLines = 14
+            const stepSize = 1 / numLines * (t2 - t1)
+            const coordinates = Array(numLines).fill().map((_, index) =>
+                calculateCurvePoint(points, t1 + index * stepSize)
+            )
+            coordinates.push(calculateCurvePoint(points, t2))
+
+            if (lineTo) {
+                ctx.lineTo(coordinates[0].x, coordinates[0].y)
+            }
+            else {
+                ctx.moveTo(coordinates[0].x, coordinates[0].y)
+            }
+            coordinates.slice(1).forEach(point => {
+                ctx.lineTo(point.x, point.y)
             })
         }
-        return calculateCurvePoint(newPoints, t)
+
+        return (note, notePosition, startingPoint, ctx) => {
+            const leftSidePoints = [
+                {
+                    x: startingPoint.x,
+                    y: startingPoint.y,
+                },
+                {
+                    x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * 0.75,
+                    y: startingPoint.y,
+                },
+                {
+                    x: notePosition.xOffset,
+                    y: flyInHeight,
+                }
+            ]
+            const rightSidePoints = [leftSidePoints[0]].concat(leftSidePoints.slice(1).map(point => ({
+                x: point.x + notePosition.width,
+                y: point.y,
+            })))
+    
+            ctx.beginPath()
+            drawCurveSegment(ctx, false, leftSidePoints, note.endProgress, note.startProgress)
+            drawCurveSegment(ctx, true, rightSidePoints, note.startProgress, note.endProgress)
+            ctx.closePath()
+            ctx.fill()
+        }
     }
 
-    const drawCurveSegment = (ctx, lineTo, points, t1, t2) => {
-        t1 = Math.max(0, Math.min(1, t1))
-        t2 = Math.max(0, Math.min(1, t2))
-        const numLines = 14
-        const stepSize = 1 / numLines * (t2 - t1)
-        const coordinates = Array(numLines).fill().map((_, index) =>
-            calculateCurvePoint(points, t1 + index * stepSize)
-        )
-        coordinates.push(calculateCurvePoint(points, t2))
-
-        if (lineTo) {
-            ctx.lineTo(coordinates[0].x, coordinates[0].y)
+    const straight = () => {
+        const easing = x => Math.pow(2, 10 * (x - 1))
+        return (note, notePosition, startingPoint, ctx) => {
+            const flyingNoteLocation = {
+                front: {
+                    x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * easing(note.startProgress),
+                    y: startingPoint.y + (flyInHeight - startingPoint.y) * easing(note.startProgress),
+                    width: notePosition.width * easing(note.startProgress),
+                    height: 2 // 0.2 * keyboardHeight * easing(note.startProgress)
+                },
+                back: {
+                    x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * easing(note.endProgress),
+                    y: startingPoint.y + (flyInHeight - startingPoint.y) * easing(note.endProgress),
+                    width: notePosition.width * easing(note.endProgress),
+                    height: 2 // 0.2 * keyboardHeight * easing(note.endProgress)
+                }
+            }
+            ctx.fillRect(
+                flyingNoteLocation.front.x,
+                flyingNoteLocation.front.y,
+                flyingNoteLocation.front.width,
+                flyingNoteLocation.front.height
+            )
+            ctx.fillRect(
+                flyingNoteLocation.back.x,
+                flyingNoteLocation.back.y,
+                flyingNoteLocation.back.width,
+                flyingNoteLocation.back.height
+            )
+            ctx.beginPath()
+            if (flyingNoteLocation.front.x < startingPoint.x) {
+                ctx.moveTo(flyingNoteLocation.front.x, flyingNoteLocation.front.y)
+                ctx.lineTo(flyingNoteLocation.back.x, flyingNoteLocation.back.y)
+                ctx.lineTo(flyingNoteLocation.back.x + flyingNoteLocation.back.width, flyingNoteLocation.back.y + flyingNoteLocation.back.height)
+                ctx.lineTo(flyingNoteLocation.front.x + flyingNoteLocation.front.width, flyingNoteLocation.front.y + flyingNoteLocation.front.height)
+            }
+            else {
+                ctx.moveTo(flyingNoteLocation.front.x, flyingNoteLocation.front.y + flyingNoteLocation.front.height)
+                ctx.lineTo(flyingNoteLocation.back.x, flyingNoteLocation.back.y + flyingNoteLocation.back.height)
+                ctx.lineTo(flyingNoteLocation.back.x + flyingNoteLocation.back.width, flyingNoteLocation.back.y)
+                ctx.lineTo(flyingNoteLocation.front.x + flyingNoteLocation.front.width, flyingNoteLocation.front.y)
+            }
+            ctx.fill()
         }
-        else {
-            ctx.moveTo(coordinates[0].x, coordinates[0].y)
-        }
-        coordinates.slice(1).forEach(point => {
-            ctx.lineTo(point.x, point.y)
-        })
     }
+
+    const shapes = { straight, bezierCurve }
+    const draw = shapes[shape]()
 
     return (note, notePosition, ctx, frameIndex) => {
-        const startingPoint = {
+        let centerStartingPointX = width * startingPoint.x
+        if (oscillation) {
             // TODO: Base oscillation speed on fps instead of hard-coding n-frame period
-            x: width * flyFrom.x + 0.4 * width * Math.cos((frameIndex / 960 + 0.5) * Math.PI),
-            y: height * flyFrom.y
+            centerStartingPointX += 0.4 * width * Math.cos((frameIndex / 960 + 0.5) * Math.PI)
         }
     
-        const thisNoteStartingPointX = startingPoint.x + 0.2 * (notePosition.xOffset - startingPoint.x)
-        const leftSidePoints = [
-            {
-                x: thisNoteStartingPointX,
-                y: startingPoint.y,
-            },
-            {
-                x: thisNoteStartingPointX + (notePosition.xOffset - thisNoteStartingPointX) * 0.75,
-                y: startingPoint.y,
-            },
-            {
-                x: notePosition.xOffset,
-                y: flyInHeight,
-            }
-        ]
-        const rightSidePoints = [leftSidePoints[0]].concat(leftSidePoints.slice(1).map(point => ({
-            x: point.x + notePosition.width,
-            y: point.y,
-        })))
+        const noteStartingPoint = {
+            x: centerStartingPointX + 0.2 * (notePosition.xOffset - centerStartingPointX),
+            y: startingPointY
+        }
 
-        ctx.beginPath()
-        drawCurveSegment(ctx, false, leftSidePoints, note.endProgress, note.startProgress)
-        drawCurveSegment(ctx, true, rightSidePoints, note.startProgress, note.endProgress)
-        ctx.closePath()
-        ctx.fill()
+        draw(note, notePosition, noteStartingPoint, ctx)
     }
 }
 
-module.exports = ({ keyboardHeightProportion = 0.1, flyFrom, impactSize = 60 }) => ({
-    imageGenerator: {
-        init: (width = 480, height = 360) => {
-            const keyboardHeight = height * (keyboardHeightProportion)
-            const flyInHeight = height - keyboardHeight
-            const keyboard = createKeyboard({
-                keyboardHeight,
-                height,
-                width,
-            })
+const flyingNoteDrawers = {
+    'topDown': drawNote2d,
+    '3d': drawNote3d,
+}
 
-            const drawNote = flyFrom
-                ? drawNote3d(flyInHeight, flyFrom, width, height, keyboardHeight)
-                : drawNote2d(flyInHeight)
+module.exports = ({
+    keyboardHeightProportion = 0.1,
+    flyIn: flyInConfig,
+    impactSize = 60,
+    width = 480,
+    height = 360
+}) => {
+    const keyboardHeight = height * (keyboardHeightProportion)
+    const flyInHeight = height - keyboardHeight
 
-            const drawFrame = (ctx, frame, frameIndex) => {
-                // flying notes
-                const { flyingNotes } = frame
-                const reversed = reverse([
-                    ...flyingNotes
-                ])
-                reversed.forEach(note => {
-                    ctx.strokeStyle = note.color
-                    ctx.fillStyle = note.color
-                    ctx.shadowColor = note.color
-                    ctx.shadowBlur = note.isPlaying ? 10 : 0
-                    const notePosition = keyboard.getFlyingNotePosition(note.midiNoteNumber)
-                    if (notePosition) {
-                        drawNote(note, notePosition, ctx, frameIndex)
-                    }
-                })
-                ctx.shadowBlur = 0
+    const keyboard = createKeyboard({
+        keyboardHeight,
+        height,
+        width,
+    })
 
-                // note impact shockwaves
-                ctx.lineWidth = 2
-                const { noteImpacts } = frame
-                noteImpacts.forEach((noteImpact) => {
-                    const { midiNoteNumber, progress } = noteImpact
-                    const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
-                    if (notePosition) {
-                        const [r, g, b] = rgba(noteImpact.color)
-                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
+    const drawNote = flyingNoteDrawers[flyInConfig.type || '2d']({
+        ...flyInConfig,
+        flyInHeight,
+        width,
+        height,
+    })
 
-                        const easingProgress = 1 // -Math.pow(2, -10 * progress) + 1
-                        const impactCircle = {
-                            x: notePosition.xOffset + 0.5 * notePosition.width,
-                            y: flyInHeight,
-                            r: notePosition.width + 0.5 * impactSize * progress * easingProgress,
-                        }
-                        ctx.beginPath()
-                        ctx.arc(
-                            impactCircle.x,
-                            impactCircle.y,
-                            impactCircle.r,
-                            0,
-                            2 * Math.PI
-                        )
-                        ctx.fill()
-                    }
-                })
-
-                // keyboard and playing/sustained notes
-                keyboard.draw(ctx, frame)
-
-                // particles
-                const { particles } = frame
-                particles.forEach(particle => {
-                    const { midiNoteNumber, origin: particleOrigin, progress, direction, color } = particle
-                    const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
-                    if(notePosition) {
-                        const origin = {
-                            x: notePosition.xOffset + particleOrigin * notePosition.width,
-                            y: flyInHeight
-                        }
-                        const angle = direction * Math.PI // in radians
-                        const particleCoords = {
-                            x: origin.x + Math.cos(angle) * progress * 100,
-                            y: origin.y - Math.sin(angle) * progress * 100
-                        }
-                        const [r, g, b] = rgba(color)
-                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
-                        ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
-                    }
-                })
+    const drawFrame = (ctx, frame, frameIndex) => {
+        // flying notes
+        const { flyingNotes } = frame
+        const reversed = reverse([
+            ...flyingNotes
+        ])
+        reversed.forEach(note => {
+            ctx.strokeStyle = note.color
+            ctx.fillStyle = note.color
+            ctx.shadowColor = note.color
+            ctx.shadowBlur = note.isPlaying ? 10 : 0
+            const notePosition = keyboard.getFlyingNotePosition(note.midiNoteNumber)
+            if (notePosition) {
+                drawNote(note, notePosition, ctx, frameIndex)
             }
+        })
+        ctx.shadowBlur = 0
 
-            return { drawFrame }
-        }
+        // note impact shockwaves
+        ctx.lineWidth = 2
+        const { noteImpacts } = frame
+        noteImpacts.forEach((noteImpact) => {
+            const { midiNoteNumber, progress } = noteImpact
+            const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
+            if (notePosition) {
+                const [r, g, b] = rgba(noteImpact.color)
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
+
+                const easingProgress = 1 // -Math.pow(2, -10 * progress) + 1
+                const impactCircle = {
+                    x: notePosition.xOffset + 0.5 * notePosition.width,
+                    y: flyInHeight,
+                    r: notePosition.width + 0.5 * impactSize * progress * easingProgress,
+                }
+                ctx.beginPath()
+                ctx.arc(
+                    impactCircle.x,
+                    impactCircle.y,
+                    impactCircle.r,
+                    0,
+                    2 * Math.PI
+                )
+                ctx.fill()
+            }
+        })
+
+        // keyboard and playing/sustained notes
+        keyboard.draw(ctx, frame)
+
+        // particles
+        const { particles } = frame
+        particles.forEach(particle => {
+            const { midiNoteNumber, origin: particleOrigin, progress, direction, color } = particle
+            const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
+            if(notePosition) {
+                const origin = {
+                    x: notePosition.xOffset + particleOrigin * notePosition.width,
+                    y: flyInHeight
+                }
+                const angle = direction * Math.PI // in radians
+                const particleCoords = {
+                    x: origin.x + Math.cos(angle) * progress * 100,
+                    y: origin.y - Math.sin(angle) * progress * 100
+                }
+                const [r, g, b] = rgba(color)
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
+                ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
+            }
+        })
     }
-})
+
+    return { drawFrame }
+}

@@ -5,6 +5,17 @@
     "width": 960,
     "height": 360,
     "backgroundColor": "black",
+    "flyIn": {
+        "type": "3d",
+        "shape": "linear",
+        "startingPoint": {
+            "x": 0.5,
+            "y": 0
+        }
+    },
+    "particles": {
+        "perFrame": 50
+    },
     "visualizer": {
         "type": "drumPads",
         "padHeight": 200,
@@ -52,13 +63,6 @@
             ["Snare"],
             ["Crash Right"]
         ],
-        "flyFrom": {
-            "x": 0.5,
-            "y": 0
-        },
         "impactSize": 75
-    },
-    "particles": {
-        "perFrame": 50
     }
 }

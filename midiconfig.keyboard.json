@@ -2,18 +2,18 @@
     "fps": 30,
     "noteApproachTime": 2000,
     "noteImpactTime": 500,
-    "impactSize": 400,
+    "impactSize": 40,
     "midiFileName": "test-data/test.mid",
     "width": 960,
     "height": 360,
     "backgroundColor": "black",
+    "flyIn": {
+        "type": "3d",
+        "shape": "straight"
+    },
     "visualizer": {
         "type": "keyboard",
-        "keyboardHeightProportion": 0.2,
-        "flyFrom": {
-            "x": 0.5,
-            "y": 0
-        }
+        "keyboardHeightProportion": 0.2
     },
     "colorizer": {
         "type": "trackRainbow"

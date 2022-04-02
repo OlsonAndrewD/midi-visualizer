@@ -4,7 +4,7 @@ const generateImages = require('./generateImages')
 const createVideo = require('./createVideo')
 const outputLine = require('./consoleColors')
 const {existsSync, readFileSync} = require("fs")
-const { orderBy } = require('lodash')
+const { orderBy, omit } = require('lodash')
 
 const consoleStyles = {
     hideCursor: "\x1b[?25l",
@@ -70,7 +70,10 @@ if(existsSync(configFile)) {
     process.exit(1)
 }
 
-const visualizer = require(`./visualizers/${config.visualizer.type}`)(config.visualizer)
+const visualizer = require(`./visualizers/${config.visualizer.type}`)({
+    ...omit(config, 'visualizer'),
+    ...config.visualizer
+})
 
 console.log('Parsing MIDI file...')
 var song
@@ -103,7 +106,7 @@ console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + `Lay
 console.log(`Generating ${frames.length} frame images...`)
 var imageDirectory
 try {
-    imageDirectory = generateImages(visualizer.imageGenerator, config.backgroundColor, frames, config.width, config.height)
+    imageDirectory = generateImages(visualizer.drawFrame, frames, config)
 } catch (err) {
     outputLine(196, 0, "Error: Couldn't draw frames.")
     console.error(err)
