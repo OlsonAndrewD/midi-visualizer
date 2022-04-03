@@ -1,6 +1,6 @@
 const { set, reduce, reverse } = require("lodash")
 const rgba = require('color-rgba')
-const { calculateBezierCurvePoint } = require("./utils")
+const { calculateBezierCurvePoint, oscillate } = require("./utils")
 
 module.exports = ({
     noteMap,
@@ -8,6 +8,7 @@ module.exports = ({
     padOrder,
     colors,
     flyIn,
+    fps,
     impactSize = 50,
     width,
     height
@@ -45,6 +46,7 @@ module.exports = ({
         x: width * flyIn.startingPoint.x,
         y: height * flyIn.startingPoint.y
     }
+    const getStartPointOffsetX = oscillate(fps, flyIn.startingPoint)
 
     const drawPads = (ctx, { playingNotes }) => {
         const padColors = playingNotes.reduce((result, note) => set(
@@ -86,14 +88,14 @@ module.exports = ({
     const linear = () => {
         const easing = progress => Math.pow(2, 10 * (progress - 1))
 
-        return (destinationPad, progress) => {
+        return (destinationPad, noteStartingPointX, progress) => {
             const destinationLocation = {
                 x: destinationPad.x + 0.25 * destinationPad.width,
                 y: destinationPad.y + 0.25 * destinationPad.height,
             }
             const easingProgress = easing(progress)
             return ({
-                x: startingPoint.x + (destinationLocation.x - startingPoint.x) * easingProgress,
+                x: noteStartingPointX + (destinationLocation.x - noteStartingPointX) * easingProgress,
                 y: startingPoint.y + (destinationLocation.y - startingPoint.y) * easingProgress,
                 width: 0.5 * destinationPad.width * easingProgress,
                 height: 0.5 * destinationPad.height * easingProgress
@@ -105,7 +107,7 @@ module.exports = ({
         const easing = x => x * x * x
         const calculateCurvePoint = (points, t) => calculateBezierCurvePoint(points, easing(t))
 
-        return (destinationPad, progress) => {
+        return (destinationPad, noteStartingPointX, progress) => {
             const destinationTopLeft = {
                 x: destinationPad.x + 0.25 * destinationPad.width,
                 y: destinationPad.y + 0.25 * destinationPad.height,
@@ -115,17 +117,23 @@ module.exports = ({
                 y: destinationPad.y + 0.25 * destinationPad.height,
             }
             const leftCurvePoints = [
-                startingPoint,
                 {
-                    x: startingPoint.x + (destinationTopLeft.x - startingPoint.x) * 0.75,
+                    x: noteStartingPointX,
+                    y: startingPoint.y
+                },
+                {
+                    x: noteStartingPointX + (destinationTopLeft.x - noteStartingPointX) * 0.75,
                     y: startingPoint.y,
                 },
                 destinationTopLeft
             ]
             const rightCurvePoints = [
-                startingPoint,
                 {
-                    x: startingPoint.x + (destinationTopRight.x - startingPoint.x) * 0.75,
+                    x: noteStartingPointX,
+                    y: startingPoint.y
+                },
+                {
+                    x: noteStartingPointX + (destinationTopRight.x - noteStartingPointX) * 0.75,
                     y: startingPoint.y,
                 },
                 destinationTopRight
@@ -150,7 +158,7 @@ module.exports = ({
         prepareNotesForLayout: (notes) => {
             notes.forEach(note => note.end = note.start + 100)
         },
-        drawFrame: (ctx, frame) => {
+        drawFrame: (ctx, frame, frameIndex) => {
             ctx.fillStyle = 'gray'
             ctx.strokeStyle = 'black'
             ctx.lineWidth = 1
@@ -163,9 +171,14 @@ module.exports = ({
             reversed.forEach(note => {
                 const padIndex = padAssignments[note.midiNoteNumber]
                 if (padIndex >= 0) {
-                    ctx.fillStyle = getNoteColor(note)
+                    const padLocation = padLocations[padIndex]
 
-                    const flyingNoteLocation = getFlyingNoteRectangle(padLocations[padIndex], note.startProgress)
+                    const centerStartingPointX = width * getStartPointOffsetX(frameIndex)
+                    const noteStartingPointX = centerStartingPointX + 0.2 * (padLocation.x + 0.5 * padLocation.width - centerStartingPointX)
+
+                    const flyingNoteLocation = getFlyingNoteRectangle(padLocation, noteStartingPointX, note.startProgress)
+
+                    ctx.fillStyle = getNoteColor(note)
                     ctx.fillRect(
                         flyingNoteLocation.x,
                         flyingNoteLocation.y,

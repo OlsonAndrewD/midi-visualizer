@@ -194,7 +194,7 @@ const drawNote3d = ({
     height
 }) => {
     const startingPointY = height * startingPoint.y
-    const getOscillatingStartPointOffsetX = oscillate(fps, startingPoint)
+    const getStartPointOffsetX = oscillate(fps, startingPoint)
 
     const bezierCurve = () => {
         const easing = x => x * x * x // x => Math.pow(2, 10 * (x - 1))
@@ -300,7 +300,7 @@ const drawNote3d = ({
     const draw = flyInPathShapes[shape]()
 
     return (note, notePosition, ctx, frameIndex) => {
-        const centerStartingPointX = width * getOscillatingStartPointOffsetX(frameIndex)
+        const centerStartingPointX = width * getStartPointOffsetX(frameIndex)
         const noteStartingPoint = {
             x: centerStartingPointX + 0.2 * (notePosition.xOffset - centerStartingPointX),
             y: startingPointY
