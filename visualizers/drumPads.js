@@ -1,5 +1,6 @@
 const { set, reduce, reverse } = require("lodash")
 const rgba = require('color-rgba')
+const { calculateBezierCurvePoint } = require("./utils")
 
 module.exports = ({
     noteMap,
@@ -39,6 +40,7 @@ module.exports = ({
         height: padHeight,
         width: padWidth,
     }))
+    const padAspectRatio = padWidth / padHeight
     const startingPoint = {
         x: width * flyIn.startingPoint.x,
         y: height * flyIn.startingPoint.y
@@ -81,6 +83,69 @@ module.exports = ({
         ctx.shadowBlur = 0
     }
 
+    const linear = () => {
+        const easing = progress => Math.pow(2, 10 * (progress - 1))
+
+        return (destinationPad, progress) => {
+            const destinationLocation = {
+                x: destinationPad.x + 0.25 * destinationPad.width,
+                y: destinationPad.y + 0.25 * destinationPad.height,
+            }
+            const easingProgress = easing(progress)
+            return ({
+                x: startingPoint.x + (destinationLocation.x - startingPoint.x) * easingProgress,
+                y: startingPoint.y + (destinationLocation.y - startingPoint.y) * easingProgress,
+                width: 0.5 * destinationPad.width * easingProgress,
+                height: 0.5 * destinationPad.height * easingProgress
+            })
+        }
+    }
+
+    const bezierCurve = () => {
+        const easing = x => x * x * x
+        const calculateCurvePoint = (points, t) => calculateBezierCurvePoint(points, easing(t))
+
+        return (destinationPad, progress) => {
+            const destinationTopLeft = {
+                x: destinationPad.x + 0.25 * destinationPad.width,
+                y: destinationPad.y + 0.25 * destinationPad.height,
+            }
+            const destinationTopRight = {
+                x: destinationPad.x + 0.75 * destinationPad.width,
+                y: destinationPad.y + 0.25 * destinationPad.height,
+            }
+            const leftCurvePoints = [
+                startingPoint,
+                {
+                    x: startingPoint.x + (destinationTopLeft.x - startingPoint.x) * 0.75,
+                    y: startingPoint.y,
+                },
+                destinationTopLeft
+            ]
+            const rightCurvePoints = [
+                startingPoint,
+                {
+                    x: startingPoint.x + (destinationTopRight.x - startingPoint.x) * 0.75,
+                    y: startingPoint.y,
+                },
+                destinationTopRight
+            ]
+            const easingProgress = easing(progress)
+            const leftCurvePoint = calculateCurvePoint(leftCurvePoints, easingProgress)
+            const rightCurvePoint = calculateCurvePoint(rightCurvePoints, easingProgress)
+            const width = rightCurvePoint.x - leftCurvePoint.x
+            return ({
+                x: leftCurvePoint.x,
+                y: leftCurvePoint.y,
+                width,
+                height: width / padAspectRatio
+            })
+        }
+    }
+
+    const flyInPathShapes = { linear, bezierCurve }
+    const getFlyingNoteRectangle = flyInPathShapes[flyIn.shape || 'linear']()
+
     return ({
         prepareNotesForLayout: (notes) => {
             notes.forEach(note => note.end = note.start + 100)
@@ -100,19 +165,7 @@ module.exports = ({
                 if (padIndex >= 0) {
                     ctx.fillStyle = getNoteColor(note)
 
-                    const destinationPad = padLocations[padIndex]
-                    const destinationLocation = {
-                        x: destinationPad.x + 0.25 * destinationPad.width,
-                        y: destinationPad.y + 0.25 * destinationPad.height,
-                    }
-                    const progress = note.startProgress
-                    const easingProgress = Math.pow(2, 10 * (progress - 1))
-                    const flyingNoteLocation = {
-                        x: startingPoint.x + (destinationLocation.x - startingPoint.x) * easingProgress,
-                        y: startingPoint.y + (destinationLocation.y - startingPoint.y) * easingProgress,
-                        width: 0.5 * destinationPad.width * easingProgress,
-                        height: 0.5 * destinationPad.height * easingProgress
-                    }
+                    const flyingNoteLocation = getFlyingNoteRectangle(padLocations[padIndex], note.startProgress)
                     ctx.fillRect(
                         flyingNoteLocation.x,
                         flyingNoteLocation.y,

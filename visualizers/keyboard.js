@@ -1,5 +1,6 @@
 const { keyBy, reverse } = require("lodash")
 const rgba = require('color-rgba')
+const { calculateBezierCurvePoint } = require("./utils")
 
 const whiteKeyMidiNoteNumbers = [
     21, // A0
@@ -187,7 +188,7 @@ const drawNote3d = ({
         x: 0.5,
         y: 0,
     },
-    shape = 'straight',
+    shape = 'linear',
     width,
     height
 }) => {
@@ -197,20 +198,7 @@ const drawNote3d = ({
     const bezierCurve = () => {
         const easing = x => x * x * x // x => Math.pow(2, 10 * (x - 1))
 
-        const calculateCurvePoint = (points, t) => {
-            if (points.length === 1) {
-                return points[0]
-            }
-            t = easing(t)
-            const newPoints = []
-            for (let i = 0; i < points.length - 1; i++) {
-                newPoints.push({
-                    x: (1 - t) * points[i].x + t * points[i + 1].x,
-                    y: (1 - t) * points[i].y + t * points[i + 1].y,
-                })
-            }
-            return calculateCurvePoint(newPoints, t)
-        }
+        const calculateCurvePoint = (points, t) => calculateBezierCurvePoint(points, easing(t))
 
         const drawCurveSegment = (ctx, lineTo, points, t1, t2) => {
             t1 = Math.max(0, Math.min(1, t1))
@@ -261,7 +249,7 @@ const drawNote3d = ({
         }
     }
 
-    const straight = () => {
+    const linear = () => {
         const easing = x => Math.pow(2, 10 * (x - 1))
         return (note, notePosition, startingPoint, ctx) => {
             const flyingNoteLocation = {
@@ -307,8 +295,8 @@ const drawNote3d = ({
         }
     }
 
-    const shapes = { straight, bezierCurve }
-    const draw = shapes[shape]()
+    const flyInPathShapes = { linear, bezierCurve }
+    const draw = flyInPathShapes[shape]()
 
     return (note, notePosition, ctx, frameIndex) => {
         let centerStartingPointX = width * startingPoint.x

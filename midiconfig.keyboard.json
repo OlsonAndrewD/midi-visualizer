@@ -9,7 +9,7 @@
     "backgroundColor": "black",
     "flyIn": {
         "type": "3d",
-        "shape": "straight"
+        "shape": "linear"
     },
     "visualizer": {
         "type": "keyboard",

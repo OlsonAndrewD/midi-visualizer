@@ -7,7 +7,7 @@
     "backgroundColor": "black",
     "flyIn": {
         "type": "3d",
-        "shape": "linear",
+        "shape": "bezierCurve",
         "startingPoint": {
             "x": 0.5,
             "y": 0
