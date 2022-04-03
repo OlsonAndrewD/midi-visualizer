@@ -1,6 +1,6 @@
 const { keyBy, reverse } = require("lodash")
 const rgba = require('color-rgba')
-const { calculateBezierCurvePoint } = require("./utils")
+const { calculateBezierCurvePoint, oscillate } = require("./utils")
 
 const whiteKeyMidiNoteNumbers = [
     21, // A0
@@ -184,6 +184,7 @@ const drawNote2d = ({ flyInHeight }) => (note, notePosition, ctx) => {
 
 const drawNote3d = ({
     flyInHeight,
+    fps,
     startingPoint = {
         x: 0.5,
         y: 0,
@@ -193,7 +194,7 @@ const drawNote3d = ({
     height
 }) => {
     const startingPointY = height * startingPoint.y
-    const { oscillation } = startingPoint
+    const getOscillatingStartPointOffsetX = oscillate(fps, startingPoint)
 
     const bezierCurve = () => {
         const easing = x => x * x * x // x => Math.pow(2, 10 * (x - 1))
@@ -299,17 +300,11 @@ const drawNote3d = ({
     const draw = flyInPathShapes[shape]()
 
     return (note, notePosition, ctx, frameIndex) => {
-        let centerStartingPointX = width * startingPoint.x
-        if (oscillation) {
-            // TODO: Base oscillation speed on fps instead of hard-coding n-frame period
-            centerStartingPointX += 0.4 * width * Math.cos((frameIndex / 960 + 0.5) * Math.PI)
-        }
-    
+        const centerStartingPointX = width * getOscillatingStartPointOffsetX(frameIndex)
         const noteStartingPoint = {
             x: centerStartingPointX + 0.2 * (notePosition.xOffset - centerStartingPointX),
             y: startingPointY
         }
-
         draw(note, notePosition, noteStartingPoint, ctx)
     }
 }
@@ -322,6 +317,7 @@ const flyingNoteDrawers = {
 module.exports = ({
     keyboardHeightProportion = 0.1,
     flyIn: flyInConfig,
+    fps,
     impactSize = 60,
     width = 480,
     height = 360
@@ -338,6 +334,7 @@ module.exports = ({
     const drawNote = flyingNoteDrawers[flyInConfig.type || '2d']({
         ...flyInConfig,
         flyInHeight,
+        fps,
         width,
         height,
     })
