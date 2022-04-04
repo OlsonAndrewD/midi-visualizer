@@ -1,4 +1,4 @@
-const { curryRight, last, round: lodashRound, sortBy, pick, concat, noop } = require('lodash')
+const { curryRight, last, round: lodashRound, sortBy, pick, concat, noop, chain, get } = require('lodash')
 const round2 = curryRight(lodashRound)(2)
 const path = require("path")
 
@@ -16,7 +16,7 @@ module.exports = ({ config, song }) => {
         } = {},
         colorizer
     } = config
-    const { notes = [] } = song
+    const { notes = [], pitchBends = [] } = song
 
     const frameLength = 1000 / fps
     const numFramesInSong = ((lastNote) => {
@@ -43,18 +43,33 @@ module.exports = ({ config, song }) => {
     const particleProgressIncrementPerFrame = 1 / numFramesInParticleLifetime
     const frameOffsetPercent = songTime => -round2(songTime % frameLength / frameLength * noteProgressIncrementPerFrame)
 
+    const pitchBendLookupByTrackAndFrame = chain(pitchBends)
+        .groupBy('track')
+        .mapValues(trackPitchBends => chain(trackPitchBends)
+            .map(pitchBend => ({
+                ...pitchBend,
+                frameNumber: frameNumberFor(pitchBend.time)
+            }))
+            .groupBy('frameNumber')
+            .mapValues(last)
+            .value()
+        )
+        .value()
+
     const colorize = colorizer ? require(`./${path.join("colorizers", colorizer.type)}`)(colorizer) : () => "white"
 
-    notes.forEach(note => {
+    notes.forEach((note) => {
         const noteColor = colorize(pick(note, ["midiNoteNumber", "track"]))
         const noteStartFrameOffset = frameOffsetPercent(note.start)
         const noteEndFrameOffset = frameOffsetPercent(note.end)
         const noteHeight = (note.end - note.start) / noteApproachTime
+        const noteStartFrame = frameNumberFor(note.start)
+        const noteEndFrame = frameNumberFor(note.end)
 
         // Note approaching
         frames.slice(
-            frameNumberFor(note.start) - numFramesInNoteApproach,
-            frameNumberFor(note.start),
+            noteStartFrame - numFramesInNoteApproach,
+            noteStartFrame,
         ).forEach((frame, frameIndex) => {
             frame.flyingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
@@ -66,7 +81,7 @@ module.exports = ({ config, song }) => {
 
         // Note impact animation
         frames.slice(
-            frameNumberFor(note.start),
+            noteStartFrame,
             frameNumberFor(note.start + noteImpactTime),
         ).forEach((frame, frameIndex) => {
             frame.noteImpacts.push({
@@ -77,10 +92,15 @@ module.exports = ({ config, song }) => {
         })
 
         // Note playing
+        let currentPitchBend = {}
         frames.slice(
-            frameNumberFor(note.start),
-            frameNumberFor(note.end)
+            noteStartFrame,
+            noteEndFrame
         ).forEach((frame, frameIndex) => {
+            currentPitchBend = get(
+                pitchBendLookupByTrackAndFrame,
+                `${note.track}.${noteStartFrame + frameIndex}`
+            ) || currentPitchBend
             frame.flyingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
                 startProgress: Math.min(1, round2(1 + noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame)),
@@ -90,18 +110,25 @@ module.exports = ({ config, song }) => {
             })
             frame.playingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
-                color: noteColor
+                color: noteColor,
+                pitchBend: currentPitchBend?.amount || 0
             })    
         })
 
         // Note sustaining
+        currentPitchBend = {}
         frames.slice(
-            frameNumberFor(note.end),
+            noteEndFrame,
             frameNumberFor(note.sustainEnd),
-        ).forEach((frame) => {
+        ).forEach((frame, frameIndex) => {
+            currentPitchBend = get(
+                pitchBendLookupByTrackAndFrame,
+                `${note.track}.${noteEndFrame + frameIndex}`
+            ) || currentPitchBend
             frame.sustainingNotes.push({
                 midiNoteNumber: note.midiNoteNumber,
-                color: noteColor
+                color: noteColor,
+                pitchBend: currentPitchBend?.amount || 0
             })
         })
 
@@ -134,7 +161,7 @@ module.exports = ({ config, song }) => {
             return particle
         }
         frames.slice(
-            frameNumberFor(note.start),
+            noteStartFrame,
             frameNumberFor(note.sustainEnd || note.end)
         ).forEach((frame) => {
             particles = concat(particles, Array(particlesPerFrame).fill().map(generateParticle))

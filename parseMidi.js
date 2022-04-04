@@ -20,6 +20,7 @@ module.exports = (midiFileName) => {
     //     console.log('———————')
     // })
     var notes = []
+    var pitchBends = []
     var playingNotes = {}
     var sustainingNotes = []
     const allTempoChanges = []
@@ -90,6 +91,16 @@ module.exports = (midiFileName) => {
                     delete playingNotes[event.data[0]]
                 }
             }
+
+            // pitch bend
+            if(event.type == 14) {
+                const value = (event.data[1] << 7) + event.data[0]
+                pitchBends.push({
+                    track: trackIndex,
+                    time: ticksToMilliseconds(currentTick, mostRecentTempoChange),
+                    amount: (value - 8192) / 8192 // 8192 means no bend
+                })
+            }
         })
         if (sustainingNotes.length) {
             sustainingNotes.forEach(note => {
@@ -102,5 +113,5 @@ module.exports = (midiFileName) => {
         nextTempoChanges = [...allTempoChanges]
         mostRecentTempoChange = null
     })
-    return {notes}
+    return { notes, pitchBends }
 }

@@ -22,6 +22,9 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     const octaveWidth = whiteKeyEdgeWidth * 7
     const sustainRectHeight = 10
 
+    const whiteNotePitchBendOffsetX = ({ pitchBend }) => pitchBend * 0.8 * whiteKeyEdgeWidth
+    const blackNotePitchBendOffsetX = ({ pitchBend }) => pitchBend * 0.8 * blackKeyWidth
+
     const xOctaveZero = 2 * whiteKeyEdgeWidth - octaveWidth
 
     const draw = (ctx, { playingNotes, sustainingNotes }) => {
@@ -37,21 +40,45 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         for (let index = 0; index < 52; index++) {
             const octave = Math.floor(index / 7)
             const midiNoteNumber = whiteKeyMidiNoteNumbers[index % 7] + octave * 12
-            if (playingNoteLookup[midiNoteNumber]) {
-                ctx.fillStyle = playingNoteLookup[midiNoteNumber].color
-                ctx.fillRect(
-                    index * whiteKeyEdgeWidth,
+            const playingNote = playingNoteLookup[midiNoteNumber]
+            if (playingNote) {
+                const pitchBendOffsetX = whiteNotePitchBendOffsetX(playingNote)
+                const gradient = ctx.createLinearGradient(
+                    (index - 0.5) * whiteKeyEdgeWidth + pitchBendOffsetX,
                     keyboardTop,
-                    whiteKeyEdgeWidth,
+                    (index + 1.5) * whiteKeyEdgeWidth + pitchBendOffsetX,
+                    keyboardTop
+                )
+                gradient.addColorStop(0, 'white')
+                gradient.addColorStop(0.3, playingNote.color)
+                gradient.addColorStop(0.7, playingNote.color)
+                gradient.addColorStop(1, 'white')
+                ctx.fillStyle = gradient
+                ctx.fillRect(
+                    index * whiteKeyEdgeWidth, // + Math.max(0, pitchBendOffsetX),
+                    keyboardTop,
+                    whiteKeyEdgeWidth, // - Math.abs(pitchBendOffsetX),
                     keyboardHeight
                 )
             }
-            if (sustainingNoteLookup[midiNoteNumber]) {
-                ctx.fillStyle = sustainingNoteLookup[midiNoteNumber].color
-                ctx.fillRect(
-                    index * whiteKeyEdgeWidth,
+            const sustainingNote = sustainingNoteLookup[midiNoteNumber]
+            if (sustainingNote) {
+                const pitchBendOffsetX = whiteNotePitchBendOffsetX(sustainingNote)
+                const gradient = ctx.createLinearGradient(
+                    (index - 0.5) * whiteKeyEdgeWidth + pitchBendOffsetX,
                     keyboardTop,
-                    whiteKeyEdgeWidth,
+                    (index + 1.5) * whiteKeyEdgeWidth + pitchBendOffsetX,
+                    keyboardTop
+                )
+                gradient.addColorStop(0, 'white')
+                gradient.addColorStop(0.3, sustainingNote.color)
+                gradient.addColorStop(0.7, sustainingNote.color)
+                gradient.addColorStop(1, 'white')
+                ctx.fillStyle = gradient
+                ctx.fillRect(
+                    index * whiteKeyEdgeWidth, // + Math.max(0, pitchBendOffsetX),
+                    keyboardTop,
+                    whiteKeyEdgeWidth, // - Math.abs(pitchBendOffsetX),
                     sustainRectHeight
                 )
             }
@@ -66,12 +93,51 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         ctx.fillStyle = "black"
 
         const drawBlackKey = (x, midiNoteNumber) => {
-            ctx.fillStyle = playingNoteLookup[midiNoteNumber]?.color || 'black'
+            ctx.fillStyle = 'black'
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight)
+
+            const playingNote = playingNoteLookup[midiNoteNumber]
+            if (playingNote) {
+                const pitchBendOffsetX = blackNotePitchBendOffsetX(playingNote)
+                const gradient = ctx.createLinearGradient(
+                    x - 0.5 * blackKeyWidth + pitchBendOffsetX,
+                    keyboardTop,
+                    x + 1.5 * blackKeyWidth + pitchBendOffsetX,
+                    keyboardTop
+                )
+                gradient.addColorStop(0, 'white')
+                gradient.addColorStop(0.3, playingNote.color)
+                gradient.addColorStop(0.7, playingNote.color)
+                gradient.addColorStop(1, 'white')
+                ctx.fillStyle = gradient
+                ctx.fillRect(
+                    x, // + Math.max(0, pitchBendOffsetX),
+                    keyboardTop,
+                    blackKeyWidth, // - Math.abs(pitchBendOffsetX),
+                    blackKeyHeight
+                )
+            }
+
             const sustainingNote = sustainingNoteLookup[midiNoteNumber]
             if (sustainingNote) {
-                ctx.fillStyle = sustainingNote.color
-                ctx.fillRect(x, keyboardTop, blackKeyWidth, sustainRectHeight)
+                const pitchBendOffsetX = blackNotePitchBendOffsetX(sustainingNote)
+                const gradient = ctx.createLinearGradient(
+                    x - 0.5 * blackKeyWidth + pitchBendOffsetX,
+                    keyboardTop,
+                    x + 1.5 * blackKeyWidth + pitchBendOffsetX,
+                    keyboardTop
+                )
+                gradient.addColorStop(0, 'white')
+                gradient.addColorStop(0.3, sustainingNote.color)
+                gradient.addColorStop(0.7, sustainingNote.color)
+                gradient.addColorStop(1, 'white')
+                ctx.fillStyle = gradient
+                ctx.fillRect(
+                    x + Math.max(0, pitchBendOffsetX),
+                    keyboardTop,
+                    blackKeyWidth - Math.abs(pitchBendOffsetX),
+                    sustainRectHeight
+                )
             }
         }
 
