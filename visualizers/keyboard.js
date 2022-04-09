@@ -239,12 +239,12 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     }
 })
 
-const drawNote2d = ({ flyInHeight }) => (note, notePosition, ctx) => {
+const drawNote2d = ({ flyInHeight }) => (notePosition, startProgress, endProgress, ctx) => {
     ctx.fillRect(
         notePosition.xOffset,
-        note.endProgress * flyInHeight,
+        endProgress * flyInHeight,
         notePosition.width,
-        note.startProgress * flyInHeight - note.endProgress * flyInHeight
+        startProgress * flyInHeight - endProgress * flyInHeight
     )
 }
 
@@ -288,7 +288,7 @@ const drawNote3d = ({
             })
         }
 
-        return (note, notePosition, startingPoint, ctx) => {
+        return (notePosition, startingPoint, startProgress, endProgress, ctx) => {
             const leftSidePoints = [
                 {
                     x: startingPoint.x,
@@ -309,8 +309,8 @@ const drawNote3d = ({
             })))
 
             ctx.beginPath()
-            drawCurveSegment(ctx, false, leftSidePoints, note.endProgress, note.startProgress)
-            drawCurveSegment(ctx, true, rightSidePoints, note.startProgress, note.endProgress)
+            drawCurveSegment(ctx, false, leftSidePoints, endProgress, startProgress)
+            drawCurveSegment(ctx, true, rightSidePoints, startProgress, endProgress)
             ctx.closePath()
             ctx.fill()
         }
@@ -318,19 +318,19 @@ const drawNote3d = ({
 
     const linear = () => {
         const easing = x => Math.pow(2, 10 * (x - 1))
-        return (note, notePosition, startingPoint, ctx) => {
+        return (notePosition, startingPoint, startProgress, endProgress, ctx) => {
             const flyingNoteLocation = {
                 front: {
-                    x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * easing(note.startProgress),
-                    y: startingPoint.y + (flyInHeight - startingPoint.y) * easing(note.startProgress),
-                    width: notePosition.width * easing(note.startProgress),
-                    height: 2 // 0.2 * keyboardHeight * easing(note.startProgress)
+                    x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * easing(startProgress),
+                    y: startingPoint.y + (flyInHeight - startingPoint.y) * easing(startProgress),
+                    width: notePosition.width * easing(startProgress),
+                    height: 2
                 },
                 back: {
-                    x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * easing(note.endProgress),
-                    y: startingPoint.y + (flyInHeight - startingPoint.y) * easing(note.endProgress),
-                    width: notePosition.width * easing(note.endProgress),
-                    height: 2 // 0.2 * keyboardHeight * easing(note.endProgress)
+                    x: startingPoint.x + (notePosition.xOffset - startingPoint.x) * easing(endProgress),
+                    y: startingPoint.y + (flyInHeight - startingPoint.y) * easing(endProgress),
+                    width: notePosition.width * easing(endProgress),
+                    height: 2
                 }
             }
             ctx.fillRect(
@@ -365,13 +365,13 @@ const drawNote3d = ({
     const flyInPathShapes = { linear, bezierCurve }
     const draw = flyInPathShapes[shape]()
 
-    return (note, notePosition, ctx, frameIndex) => {
+    return (notePosition, startProgress, endProgress, ctx, frameIndex) => {
         const centerStartingPointX = width * getStartPointOffsetX(frameIndex)
         const noteStartingPoint = {
             x: centerStartingPointX + 0.2 * (notePosition.xOffset - centerStartingPointX),
             y: startingPointY
         }
-        draw(note, notePosition, noteStartingPoint, ctx)
+        draw(notePosition, noteStartingPoint, startProgress, endProgress, ctx)
     }
 }
 
@@ -411,14 +411,22 @@ module.exports = ({
         const reversed = reverse([
             ...flyingNotes
         ])
-        reversed.forEach(({ sourceNote: note, isPlaying }) => {
-            ctx.strokeStyle = note.color.fillStyle
-            ctx.fillStyle = note.color.fillStyle
-            ctx.shadowColor = note.color.fillStyle
+        reversed.forEach(({
+            sourceNote: {
+                color: { fillStyle },
+                midiNoteNumber
+            },
+            isPlaying,
+            startProgress,
+            endProgress
+        }) => {
+            ctx.strokeStyle = fillStyle
+            ctx.fillStyle = fillStyle
+            ctx.shadowColor = fillStyle
             ctx.shadowBlur = isPlaying ? 10 : 0
-            const notePosition = keyboard.getFlyingNotePosition(note.midiNoteNumber)
+            const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
             if (notePosition) {
-                drawNote(note, notePosition, ctx, frameIndex)
+                drawNote(notePosition, startProgress, endProgress, ctx, frameIndex)
             }
         })
         ctx.shadowBlur = 0
