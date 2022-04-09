@@ -29,7 +29,7 @@ module.exports = ({
         })
         return assignments
     }, {})
-    const getNoteColor = ({ midiNoteNumber }) => colors[noteMap[midiNoteNumber] || 'unknown'] || colors.default
+    const getNoteColor = (midiNoteNumber) => colors[noteMap[midiNoteNumber] || 'unknown'] || colors.default
 
     const spacing = 10
     const numberOfPads = padOrder.length
@@ -49,10 +49,10 @@ module.exports = ({
     const getStartPointOffsetX = oscillate(fps, flyIn.startingPoint)
 
     const drawPads = (ctx, { playingNotes }) => {
-        const padColors = playingNotes.reduce((result, note) => set(
+        const padColors = playingNotes.reduce((result, { sourceNote: { midiNoteNumber } }) => set(
             result,
-            padAssignments[note.midiNoteNumber],
-            getNoteColor(note)
+            padAssignments[midiNoteNumber],
+            getNoteColor(midiNoteNumber)
         ), {})
 
         ctx.lineWidth = 3
@@ -168,17 +168,17 @@ module.exports = ({
             const reversed = reverse([
                 ...flyingNotes
             ])
-            reversed.forEach(note => {
-                const padIndex = padAssignments[note.midiNoteNumber]
+            reversed.forEach(({ sourceNote: { midiNoteNumber }, startProgress }) => {
+                const padIndex = padAssignments[midiNoteNumber]
                 if (padIndex >= 0) {
                     const padLocation = padLocations[padIndex]
 
                     const centerStartingPointX = width * getStartPointOffsetX(frameIndex)
                     const noteStartingPointX = centerStartingPointX + 0.2 * (padLocation.x + 0.5 * padLocation.width - centerStartingPointX)
 
-                    const flyingNoteLocation = getFlyingNoteRectangle(padLocation, noteStartingPointX, note.startProgress)
+                    const flyingNoteLocation = getFlyingNoteRectangle(padLocation, noteStartingPointX, startProgress)
 
-                    ctx.fillStyle = getNoteColor(note)
+                    ctx.fillStyle = getNoteColor(midiNoteNumber)
                     ctx.fillRect(
                         flyingNoteLocation.x,
                         flyingNoteLocation.y,
@@ -201,10 +201,10 @@ module.exports = ({
             ctx.lineWidth = 2
             const { noteImpacts } = frame
             noteImpacts.forEach((noteImpact) => {
-                const { midiNoteNumber, progress } = noteImpact
+                const { sourceNote: { midiNoteNumber }, progress } = noteImpact
                 const padIndex = padAssignments[midiNoteNumber]
                 if (padIndex >= 0) {
-                    const [r, g, b] = rgba(getNoteColor(noteImpact))
+                    const [r, g, b] = rgba(getNoteColor(midiNoteNumber))
                     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
 
                     const destinationPad = padLocations[padIndex]
@@ -225,25 +225,27 @@ module.exports = ({
             })
 
             // particles
-            const { particles } = frame
-            particles.forEach(particle => {
-                const { midiNoteNumber, origin: particleOrigin, progress, direction, color } = particle
-                const padIndex = padAssignments[midiNoteNumber]
-                if (padIndex >= 0) {
-                    const destinationPad = padLocations[padIndex]
-                    const origin = {
-                        x: destinationPad.x + particleOrigin * destinationPad.width,
-                        y: destinationPad.y
+            const { particleSets } = frame
+            particleSets.forEach(({ sourceNote: { midiNoteNumber, color }, particles }) => {
+                particles.forEach(particle => {
+                    const { origin: particleOrigin, progress, direction } = particle
+                    const padIndex = padAssignments[midiNoteNumber]
+                    if (padIndex >= 0) {
+                        const destinationPad = padLocations[padIndex]
+                        const origin = {
+                            x: destinationPad.x + particleOrigin * destinationPad.width,
+                            y: destinationPad.y
+                        }
+                        const angle = direction * Math.PI // in radians
+                        const particleCoords = {
+                            x: origin.x + Math.cos(angle) * progress * 100,
+                            y: origin.y - Math.sin(angle) * progress * 100
+                        }
+                        const [r, g, b] = rgba(getNoteColor(midiNoteNumber))
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
+                        ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
                     }
-                    const angle = direction * Math.PI // in radians
-                    const particleCoords = {
-                        x: origin.x + Math.cos(angle) * progress * 100,
-                        y: origin.y - Math.sin(angle) * progress * 100
-                    }
-                    const [r, g, b] = rgba(getNoteColor(particle))
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
-                    ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
-                }
+                })
             })
         }
     })
