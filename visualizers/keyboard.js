@@ -28,8 +28,8 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     const xOctaveZero = 2 * whiteKeyEdgeWidth - octaveWidth
 
     const draw = (ctx, { playingNotes, sustainingNotes }) => {
-        const playingNoteLookup = keyBy(playingNotes, 'midiNoteNumber')
-        const sustainingNoteLookup = keyBy(sustainingNotes, 'midiNoteNumber')
+        const playingNoteLookup = keyBy(playingNotes, 'sourceNote.midiNoteNumber')
+        const sustainingNoteLookup = keyBy(sustainingNotes, 'sourceNote.midiNoteNumber')
 
         ctx.fillStyle = "white"
         ctx.fillRect(0, keyboardTop, keyboardWidth, keyboardHeight)
@@ -40,7 +40,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         for (let index = 0; index < 52; index++) {
             const octave = Math.floor(index / 7)
             const midiNoteNumber = whiteKeyMidiNoteNumbers[index % 7] + octave * 12
-            const playingNote = playingNoteLookup[midiNoteNumber]
+            const { sourceNote: playingNote } = playingNoteLookup[midiNoteNumber] || {}
             if (playingNote) {
                 const pitchBendOffsetX = whiteNotePitchBendOffsetX(playingNote)
                 const gradient = ctx.createLinearGradient(
@@ -50,8 +50,8 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                     keyboardTop
                 )
                 gradient.addColorStop(0, 'white')
-                gradient.addColorStop(0.3, playingNote.color)
-                gradient.addColorStop(0.7, playingNote.color)
+                gradient.addColorStop(0.3, playingNote.color.fillStyle)
+                gradient.addColorStop(0.7, playingNote.color.fillStyle)
                 gradient.addColorStop(1, 'white')
                 ctx.fillStyle = gradient
                 ctx.fillRect(
@@ -61,7 +61,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                     keyboardHeight
                 )
             }
-            const sustainingNote = sustainingNoteLookup[midiNoteNumber]
+            const { sourceNote: sustainingNote } = sustainingNoteLookup[midiNoteNumber] ||{}
             if (sustainingNote) {
                 const pitchBendOffsetX = whiteNotePitchBendOffsetX(sustainingNote)
                 const gradient = ctx.createLinearGradient(
@@ -71,8 +71,8 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                     keyboardTop
                 )
                 gradient.addColorStop(0, 'white')
-                gradient.addColorStop(0.3, sustainingNote.color)
-                gradient.addColorStop(0.7, sustainingNote.color)
+                gradient.addColorStop(0.3, sustainingNote.color.fillStyle)
+                gradient.addColorStop(0.7, sustainingNote.color.fillStyle)
                 gradient.addColorStop(1, 'white')
                 ctx.fillStyle = gradient
                 ctx.fillRect(
@@ -96,7 +96,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
             ctx.fillStyle = 'black'
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight)
 
-            const playingNote = playingNoteLookup[midiNoteNumber]
+            const { sourceNote: playingNote } = playingNoteLookup[midiNoteNumber] || {}
             if (playingNote) {
                 const pitchBendOffsetX = blackNotePitchBendOffsetX(playingNote)
                 const gradient = ctx.createLinearGradient(
@@ -106,8 +106,8 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                     keyboardTop
                 )
                 gradient.addColorStop(0, 'white')
-                gradient.addColorStop(0.3, playingNote.color)
-                gradient.addColorStop(0.7, playingNote.color)
+                gradient.addColorStop(0.3, playingNote.color.fillStyle)
+                gradient.addColorStop(0.7, playingNote.color.fillStyle)
                 gradient.addColorStop(1, 'white')
                 ctx.fillStyle = gradient
                 ctx.fillRect(
@@ -118,7 +118,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                 )
             }
 
-            const sustainingNote = sustainingNoteLookup[midiNoteNumber]
+            const { sourceNote: sustainingNote } = sustainingNoteLookup[midiNoteNumber] || {}
             if (sustainingNote) {
                 const pitchBendOffsetX = blackNotePitchBendOffsetX(sustainingNote)
                 const gradient = ctx.createLinearGradient(
@@ -128,8 +128,8 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                     keyboardTop
                 )
                 gradient.addColorStop(0, 'white')
-                gradient.addColorStop(0.3, sustainingNote.color)
-                gradient.addColorStop(0.7, sustainingNote.color)
+                gradient.addColorStop(0.3, sustainingNote.color.fillStyle)
+                gradient.addColorStop(0.7, sustainingNote.color.fillStyle)
                 gradient.addColorStop(1, 'white')
                 ctx.fillStyle = gradient
                 ctx.fillRect(
@@ -307,7 +307,7 @@ const drawNote3d = ({
                 x: point.x + notePosition.width,
                 y: point.y,
             })))
-    
+
             ctx.beginPath()
             drawCurveSegment(ctx, false, leftSidePoints, note.endProgress, note.startProgress)
             drawCurveSegment(ctx, true, rightSidePoints, note.startProgress, note.endProgress)
@@ -411,11 +411,11 @@ module.exports = ({
         const reversed = reverse([
             ...flyingNotes
         ])
-        reversed.forEach(note => {
-            ctx.strokeStyle = note.color
-            ctx.fillStyle = note.color
-            ctx.shadowColor = note.color
-            ctx.shadowBlur = note.isPlaying ? 10 : 0
+        reversed.forEach(({ sourceNote: note, isPlaying }) => {
+            ctx.strokeStyle = note.color.fillStyle
+            ctx.fillStyle = note.color.fillStyle
+            ctx.shadowColor = note.color.fillStyle
+            ctx.shadowBlur = isPlaying ? 10 : 0
             const notePosition = keyboard.getFlyingNotePosition(note.midiNoteNumber)
             if (notePosition) {
                 drawNote(note, notePosition, ctx, frameIndex)
@@ -426,11 +426,10 @@ module.exports = ({
         // note impact shockwaves
         ctx.lineWidth = 2
         const { noteImpacts } = frame
-        noteImpacts.forEach((noteImpact) => {
-            const { midiNoteNumber, progress } = noteImpact
+        noteImpacts.forEach(({ sourceNote: { midiNoteNumber, color }, progress }) => {
             const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
             if (notePosition) {
-                const [r, g, b] = rgba(noteImpact.color)
+                const [r, g, b] = rgba(color.fillStyle)
                 ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
 
                 const easingProgress = 1 // -Math.pow(2, -10 * progress) + 1
@@ -455,24 +454,26 @@ module.exports = ({
         keyboard.draw(ctx, frame)
 
         // particles
-        const { particles } = frame
-        particles.forEach(particle => {
-            const { midiNoteNumber, origin: particleOrigin, progress, direction, color } = particle
-            const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
-            if(notePosition) {
-                const origin = {
-                    x: notePosition.xOffset + particleOrigin * notePosition.width,
-                    y: flyInHeight
+        const { particleSets } = frame
+        particleSets.forEach(({ sourceNote: { midiNoteNumber, color }, particles }) => {
+            particles.forEach(particle => {
+                const { origin: particleOrigin, progress, direction } = particle
+                const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
+                if (notePosition) {
+                    const origin = {
+                        x: notePosition.xOffset + particleOrigin * notePosition.width,
+                        y: flyInHeight
+                    }
+                    const angle = direction * Math.PI // in radians
+                    const particleCoords = {
+                        x: origin.x + Math.cos(angle) * progress * 100,
+                        y: origin.y - Math.sin(angle) * progress * 100
+                    }
+                    const [r, g, b] = rgba(color.fillStyle)
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
+                    ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
                 }
-                const angle = direction * Math.PI // in radians
-                const particleCoords = {
-                    x: origin.x + Math.cos(angle) * progress * 100,
-                    y: origin.y - Math.sin(angle) * progress * 100
-                }
-                const [r, g, b] = rgba(color)
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
-                ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
-            }
+            })
         })
     }
 

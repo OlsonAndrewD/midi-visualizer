@@ -1,18 +1,19 @@
-const { keyBy } = require("lodash")
+const { chain } = require("lodash")
 
 const initKeyswitcher = ({
     color = 'white',
     keyswitches = [],
 }) => {
-    const keyswitchLookup = keyBy(keyswitches, 'midiNoteNumber')
-    let activeKeyswitchColor = color
+    const defaultColor = { fillStyle: color }
+    const keyswitchColorLookup = chain(keyswitches)
+        .keyBy('midiNoteNumber')
+        .mapValues(({ color }) => { fillStyle: color })
+        .value()
+    let activeKeyswitchColor = defaultColor
 
     const getCurrentColor = ({ midiNoteNumber }) => {
-        const keyswitch = keyswitchLookup[midiNoteNumber]
-        if (keyswitch) {
-            activeKeyswitchColor = keyswitch.color
-        }
-        return activeKeyswitchColor || color
+        activeKeyswitchColor = keyswitchColorLookup[midiNoteNumber] || activeKeyswitchColor
+        return activeKeyswitchColor || defaultColor
     }
 
     return {
@@ -24,6 +25,7 @@ module.exports = ({
     fallbackColor = 'white',
     tracks = [],
 }) => {
+    fallbackColor = { fillStyle: fallbackColor }
     const trackKeyswitchers = {}
     tracks.forEach((track, index) => {
         trackKeyswitchers[index] = initKeyswitcher(track)

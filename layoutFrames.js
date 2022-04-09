@@ -1,6 +1,7 @@
-const { curryRight, last, round: lodashRound, sortBy, pick, concat, noop, chain, get } = require('lodash')
+const { curryRight, last, round: lodashRound, sortBy, pick, concat, noop, chain, get, find } = require('lodash')
 const round2 = curryRight(lodashRound)(2)
 const path = require("path")
+const LayoutParticle = require('./layoutParticle')
 
 module.exports = ({ config, song }) => {
     const {
@@ -34,7 +35,7 @@ module.exports = ({ config, song }) => {
         playingNotes: [],
         noteImpacts: [],
         sustainingNotes: [],
-        particles: []
+        particleSets: []
     }))
 
     const frameNumberFor = songTime => Math.floor((songTime + noteApproachTime) / 1000 * fps)
@@ -56,10 +57,15 @@ module.exports = ({ config, song }) => {
         )
         .value()
 
-    const colorize = colorizer ? require(`./${path.join("colorizers", colorizer.type)}`)(colorizer) : () => "white"
+    const colorize = colorizer
+        ? require(`./${path.join("colorizers", colorizer.type)}`)(colorizer)
+        : (() => {
+            const white = { fillStyle: 'white' }
+            return () => white
+        })()
 
     notes.forEach((note) => {
-        const noteColor = colorize(pick(note, ["midiNoteNumber", "track"]))
+        note.color = colorize(pick(note, ["midiNoteNumber", "track"]))
         const noteStartFrameOffset = frameOffsetPercent(note.start)
         const noteEndFrameOffset = frameOffsetPercent(note.end)
         const noteHeight = (note.end - note.start) / noteApproachTime
@@ -72,10 +78,9 @@ module.exports = ({ config, song }) => {
             noteStartFrame,
         ).forEach((frame, frameIndex) => {
             frame.flyingNotes.push({
-                midiNoteNumber: note.midiNoteNumber,
+                sourceNote: note,
                 startProgress: Math.min(1, round2(noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame)),
                 endProgress: Math.min(1, round2(noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)),
-                color: noteColor
             })
         })
 
@@ -85,9 +90,8 @@ module.exports = ({ config, song }) => {
             frameNumberFor(note.start + noteImpactTime),
         ).forEach((frame, frameIndex) => {
             frame.noteImpacts.push({
-                ...note,
+                sourceNote: note,
                 progress: round2(frameIndex * noteImpactProgressIncrementPerFrame),
-                color: noteColor,
             })
         })
 
@@ -102,15 +106,13 @@ module.exports = ({ config, song }) => {
                 `${note.track}.${noteStartFrame + frameIndex}`
             ) || currentPitchBend
             frame.flyingNotes.push({
-                midiNoteNumber: note.midiNoteNumber,
+                sourceNote: note,
                 startProgress: Math.min(1, round2(1 + noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame)),
                 endProgress: Math.min(1, round2(1 + noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)),
-                color: noteColor,
                 isPlaying: true
             })
             frame.playingNotes.push({
-                midiNoteNumber: note.midiNoteNumber,
-                color: noteColor,
+                sourceNote: note,
                 pitchBend: currentPitchBend?.amount || 0
             })    
         })
@@ -126,51 +128,31 @@ module.exports = ({ config, song }) => {
                 `${note.track}.${noteEndFrame + frameIndex}`
             ) || currentPitchBend
             frame.sustainingNotes.push({
-                midiNoteNumber: note.midiNoteNumber,
-                color: noteColor,
+                sourceNote: note,
                 pitchBend: currentPitchBend?.amount || 0
             })
         })
 
         // Particles
         let particles = []
-        const generateParticle = () => {
-            let frameNumber = 0
-            const origin = Math.random()
-            const direction = Math.random()
-            let progress = 0
-
-            const particle = {
-                addToNext: (frame) => {
-                    frameNumber++
-                    if (frameNumber > numFramesInParticleLifetime) {
-                        particle.addToNext = noop
-                    }
-                    else {
-                        progress += particleProgressIncrementPerFrame
-                        frame.particles.push({
-                            midiNoteNumber: note.midiNoteNumber,
-                            color: noteColor,
-                            origin,
-                            direction,
-                            progress,
-                        })
-                    }
-                }
+        const removeCompletedParticles = () => {
+            while (particles.length && particles[0].frameNumber >= numFramesInParticleLifetime) {
+                particles.shift()
             }
-            return particle
         }
         frames.slice(
             noteStartFrame,
             frameNumberFor(note.sustainEnd || note.end)
         ).forEach((frame) => {
-            particles = concat(particles, Array(particlesPerFrame).fill().map(generateParticle))
+            particles.push(...Array(particlesPerFrame).fill().map(() => new LayoutParticle(note, particleProgressIncrementPerFrame)))
+            removeCompletedParticles()
             particles.forEach(particle => particle.addToNext(frame))
         })
         frames.slice(
             frameNumberFor((note.sustainEnd || note.end) + 1),
             frameNumberFor((note.sustainEnd || note.end) + 1 + particleLifetime)
         ).forEach((frame) => {
+            removeCompletedParticles()
             particles.forEach(particle => particle.addToNext(frame))
         })
     })

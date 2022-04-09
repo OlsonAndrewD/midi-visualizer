@@ -1,3 +1,3 @@
-module.exports = (config = "red") => ({}) => {
-    return config
-}
+module.exports = (color = "red") => () => ({
+    fillStyle: color
+})
