@@ -16,19 +16,23 @@
     "particles": {
         "perFrame": 50
     },
-    "visualizer": {
-        "type": "drumPads",
-        "padHeight": 200,
-        "noteMap": {
-            "33": "drum 1",
-            "34": "drum 2",
-            "35": "drum 3"
-        },
-        "colors": {
+    "noteMap": {
+        "33": "drum 1",
+        "34": "drum 2",
+        "35": "drum 3"
+    },
+    "colorizer": {
+        "type": "byNote",
+        "defaultColor": "white",
+        "noteColors": {
             "drum 1": "red",
             "drum 2": "green",
             "drum 3": "cyan"
-        },
+        }
+    },
+    "visualizer": {
+        "type": "drumPads",
+        "padHeight": 200,
         "padOrder": [
             ["drum 1", "drum 2"],
             ["drum 3"]

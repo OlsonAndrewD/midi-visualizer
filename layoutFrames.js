@@ -15,7 +15,8 @@ module.exports = ({ config, song }) => {
             // angleSpread: particleAngleSpread = 0.5,
             // distanceMultiplier: particleDistanceMultiplier = 0.8,
         } = {},
-        colorizer
+        colorizer,
+        noteMap,
     } = config
     const { notes = [], pitchBends = [] } = song
 
@@ -58,7 +59,7 @@ module.exports = ({ config, song }) => {
         .value()
 
     const colorize = colorizer
-        ? require(`./${path.join("colorizers", colorizer.type)}`)(colorizer)
+        ? require(`./${path.join("colorizers", colorizer.type)}`)(colorizer, noteMap)
         : (() => {
             const white = { fillStyle: 'white' }
             return () => white

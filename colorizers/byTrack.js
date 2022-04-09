@@ -7,7 +7,7 @@ const initKeyswitcher = ({
     const defaultColor = { fillStyle: color }
     const keyswitchColorLookup = chain(keyswitches)
         .keyBy('midiNoteNumber')
-        .mapValues(({ color }) => { fillStyle: color })
+        .mapValues(({ color }) => ({ fillStyle: color }))
         .value()
     let activeKeyswitchColor = defaultColor
 
@@ -22,16 +22,16 @@ const initKeyswitcher = ({
 }
 
 module.exports = ({
-    fallbackColor = 'white',
+    defaultColor = 'white',
     tracks = [],
 }) => {
-    fallbackColor = { fillStyle: fallbackColor }
+    defaultColor = { fillStyle: defaultColor }
     const trackKeyswitchers = {}
     tracks.forEach((track, index) => {
         trackKeyswitchers[index] = initKeyswitcher(track)
     })
     return (note) => {
         const { track } = note
-        return trackKeyswitchers[track]?.getCurrentColor(note) || fallbackColor
+        return trackKeyswitchers[track]?.getCurrentColor(note) || defaultColor
     }
 }

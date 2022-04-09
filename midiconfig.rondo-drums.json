@@ -20,25 +20,24 @@
     "particles": {
         "perFrame": 50
     },
-    "visualizer": {
-        "type": "drumPads",
-        "padHeight": 200,
-        "noteMap": {
-            "36": "Kick 1",
-            "35": "Kick 2",
-            "38": "Snare",
-            "57": "Crash Right",
-            "55": "Crash Left",
-            "60": "HH Closed Tight",
-            "61": "HH Closed",
-            "62": "HH Open 1",
-            "63": "HH Open 2",
-            "64": "HH Open ?",
-            "65": "HH Open 3",
-            "72": "HH Pedal"
-        },
-        "colors": {
-            "default": "white",
+    "noteMap": {
+        "36": "Kick 1",
+        "35": "Kick 2",
+        "38": "Snare",
+        "57": "Crash Right",
+        "55": "Crash Left",
+        "60": "HH Closed Tight",
+        "61": "HH Closed",
+        "62": "HH Open 1",
+        "63": "HH Open 2",
+        "64": "HH Open ?",
+        "65": "HH Open 3",
+        "72": "HH Pedal"
+    },
+    "colorizer": {
+        "type": "byNote",
+        "defaultColor": "white",
+        "noteColors": {
             "Kick 1": "red",
             "Kick 2": "maroon",
             "Snare": "white",
@@ -51,7 +50,11 @@
             "HH Open 3": "#FF00FF",
             "HH Open ?": "#FF00FF",
             "HH Pedal": "purple"
-        },
+        }
+    },
+    "visualizer": {
+        "type": "drumPads",
+        "padHeight": 200,
         "padOrder": [
             ["Crash Left"],
             [
