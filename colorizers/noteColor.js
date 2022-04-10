@@ -1,3 +1,6 @@
-module.exports = (color = "red") => () => ({
-    fillStyle: color
-})
+module.exports = ({ color = "red" }) => {
+    const singleColor = {
+        fillStyle: color
+    }
+    return () => singleColor
+}
