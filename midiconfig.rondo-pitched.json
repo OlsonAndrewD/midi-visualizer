@@ -1,0 +1,114 @@
+{
+    "fps": 30,
+    "noteApproachTime": 2000,
+    "noteImpactTime": 500,
+    "impactSize": 60,
+    "midiFileName": "test-data/pitched-instr.mid",
+    "width": 960,
+    "height": 360,
+    "backgroundColor": "black",
+    "flyIn": {
+        "type": "3d",
+        "shape": "bezierCurve",
+        "startingPoint": {
+            "x": 0.5,
+            "y": 0,
+            "oscillation": {
+                "cycleLengthInSeconds": 20,
+                "width": 0.8
+            }
+        }
+    },
+    "visualizer": {
+        "type": "keyboard",
+        "keyboardHeightProportion": 0.2
+    },
+    "colorizer": {
+        "type": "byTrack",
+        "tracks": [
+            {
+                "name": "tempo track needs no colors"
+            },
+            {
+                "name": "Synth",
+                "color": "pink"
+            },
+            {
+                "name": "Guitar 1",
+                "color": "cyan",
+                "keyswitches": [
+                    {
+                        "name": "sustain",
+                        "midiNoteNumber": 12,
+                        "color": null
+                    },
+                    {
+                        "name": "tapping",
+                        "midiNoteNumber": 17,
+                        "color": "#7FFFD4"
+                    }
+                ]
+            },
+            {
+                "name": "Guitar 1 Re-recorded",
+                "color": "cyan",
+                "keyswitches": [
+                    {
+                        "name": "sustain",
+                        "midiNoteNumber": 12,
+                        "color": null
+                    },
+                    {
+                        "name": "tapping",
+                        "midiNoteNumber": 17,
+                        "color": "#7FFFD4"
+                    }
+                ]
+            },
+            {
+                "name": "Guitar 2",
+                "color": "green"
+            },
+            {
+                "name": "Guitar 2 Re-recorded",
+                "color": "green"
+            },
+            {
+                "name": "Guitar 3",
+                "color": "#af0000",
+                "keyswitches": [
+                    {
+                        "name": "sustain",
+                        "midiNoteNumber": 12,
+                        "color": null
+                    },
+                    {
+                        "name": "power chord sustain",
+                        "midiNoteNumber": 13,
+                        "color": "#ff0000"
+                    },
+                    {
+                        "name": "staccato",
+                        "midiNoteNumber": 14,
+                        "color": null
+                    },
+                    {
+                        "name": "power chord staccato",
+                        "midiNoteNumber": 15,
+                        "color": "#ff0000"
+                    },
+                    {
+                        "name": "fx",
+                        "midiNoteNumber": 19,
+                        "color": "magenta"
+                    },
+                    {
+                        "name": "choke",
+                        "midiNoteNumber": 21,
+                        "color": "brown"
+                    }
+                ]
+            }
+        ]
+    }
+}
