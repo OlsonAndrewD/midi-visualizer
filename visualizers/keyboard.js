@@ -22,8 +22,8 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     const octaveWidth = whiteKeyEdgeWidth * 7
     const sustainRectHeight = 10
 
-    const whiteNotePitchBendOffsetX = ({ pitchBend }) => pitchBend * 0.8 * whiteKeyEdgeWidth
-    const blackNotePitchBendOffsetX = ({ pitchBend }) => pitchBend * 0.8 * blackKeyWidth
+    const whiteNotePitchBendOffsetX = (pitchBend) => (pitchBend || 0) * 0.8 * whiteKeyEdgeWidth
+    const blackNotePitchBendOffsetX = (pitchBend) => (pitchBend || 0) * 0.8 * blackKeyWidth
 
     const xOctaveZero = 2 * whiteKeyEdgeWidth - octaveWidth
 
@@ -40,9 +40,9 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
         for (let index = 0; index < 52; index++) {
             const octave = Math.floor(index / 7)
             const midiNoteNumber = whiteKeyMidiNoteNumbers[index % 7] + octave * 12
-            const { sourceNote: playingNote } = playingNoteLookup[midiNoteNumber] || {}
+            const { sourceNote: playingNote, pitchBend: playingNotePitchBend } = playingNoteLookup[midiNoteNumber] || {}
             if (playingNote) {
-                const pitchBendOffsetX = whiteNotePitchBendOffsetX(playingNote)
+                const pitchBendOffsetX = whiteNotePitchBendOffsetX(playingNotePitchBend)
                 const gradient = ctx.createLinearGradient(
                     (index - 0.5) * whiteKeyEdgeWidth + pitchBendOffsetX,
                     keyboardTop,
@@ -61,9 +61,9 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                     keyboardHeight
                 )
             }
-            const { sourceNote: sustainingNote } = sustainingNoteLookup[midiNoteNumber] ||{}
+            const { sourceNote: sustainingNote, pitchBend: sustainingNotePitchBend } = sustainingNoteLookup[midiNoteNumber] || {}
             if (sustainingNote) {
-                const pitchBendOffsetX = whiteNotePitchBendOffsetX(sustainingNote)
+                const pitchBendOffsetX = whiteNotePitchBendOffsetX(sustainingNotePitchBend)
                 const gradient = ctx.createLinearGradient(
                     (index - 0.5) * whiteKeyEdgeWidth + pitchBendOffsetX,
                     keyboardTop,
@@ -96,9 +96,9 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
             ctx.fillStyle = 'black'
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight)
 
-            const { sourceNote: playingNote } = playingNoteLookup[midiNoteNumber] || {}
+            const { sourceNote: playingNote, pitchBend: playingNotePitchBend } = playingNoteLookup[midiNoteNumber] || {}
             if (playingNote) {
-                const pitchBendOffsetX = blackNotePitchBendOffsetX(playingNote)
+                const pitchBendOffsetX = blackNotePitchBendOffsetX(playingNotePitchBend)
                 const gradient = ctx.createLinearGradient(
                     x - 0.5 * blackKeyWidth + pitchBendOffsetX,
                     keyboardTop,
@@ -118,9 +118,9 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                 )
             }
 
-            const { sourceNote: sustainingNote } = sustainingNoteLookup[midiNoteNumber] || {}
+            const { sourceNote: sustainingNote, pitchBend: sustainingNotePitchBend } = sustainingNoteLookup[midiNoteNumber] || {}
             if (sustainingNote) {
-                const pitchBendOffsetX = blackNotePitchBendOffsetX(sustainingNote)
+                const pitchBendOffsetX = blackNotePitchBendOffsetX(sustainingNotePitchBend)
                 const gradient = ctx.createLinearGradient(
                     x - 0.5 * blackKeyWidth + pitchBendOffsetX,
                     keyboardTop,
