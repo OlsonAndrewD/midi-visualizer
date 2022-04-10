@@ -1,7 +1,7 @@
-const { curryRight, last, round: lodashRound, sortBy, pick, concat, noop, chain, get, find } = require('lodash')
+const { curryRight, last, round: lodashRound, sortBy, pick, chain, get } = require('lodash')
 const round2 = curryRight(lodashRound)(2)
 const path = require("path")
-const LayoutParticle = require('./layoutParticle')
+const Particle = require('./particle')
 
 module.exports = ({ config, song }) => {
     const {
@@ -36,7 +36,7 @@ module.exports = ({ config, song }) => {
         playingNotes: [],
         noteImpacts: [],
         sustainingNotes: [],
-        particleSets: []
+        newParticles: []
     }))
 
     const frameNumberFor = songTime => Math.floor((songTime + noteApproachTime) / 1000 * fps)
@@ -135,26 +135,11 @@ module.exports = ({ config, song }) => {
         })
 
         // Particles
-        let particles = []
-        const removeCompletedParticles = () => {
-            while (particles.length && particles[0].frameNumber >= numFramesInParticleLifetime) {
-                particles.shift()
-            }
-        }
         frames.slice(
             noteStartFrame,
             frameNumberFor(note.sustainEnd || note.end)
         ).forEach((frame) => {
-            particles.push(...Array(particlesPerFrame).fill().map(() => new LayoutParticle(note, particleProgressIncrementPerFrame)))
-            removeCompletedParticles()
-            particles.forEach(particle => particle.addToNext(frame))
-        })
-        frames.slice(
-            frameNumberFor((note.sustainEnd || note.end) + 1),
-            frameNumberFor((note.sustainEnd || note.end) + 1 + particleLifetime)
-        ).forEach((frame) => {
-            removeCompletedParticles()
-            particles.forEach(particle => particle.addToNext(frame))
+            frame.newParticles.push(...Array(particlesPerFrame).fill().map(() => new Particle(note, particleProgressIncrementPerFrame)))
         })
     })
 

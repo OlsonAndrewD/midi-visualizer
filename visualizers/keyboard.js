@@ -411,6 +411,8 @@ module.exports = ({
         height,
     })
 
+    const particles = []
+
     const drawFrame = (ctx, frame, frameIndex) => {
         // flying notes
         const { flyingNotes } = frame
@@ -468,27 +470,33 @@ module.exports = ({
         keyboard.draw(ctx, frame)
 
         // particles
-        const { particleSets } = frame
-        particleSets.forEach(({ sourceNote: { midiNoteNumber, color }, particles }) => {
-            particles.forEach(particle => {
-                const { origin: particleOrigin, progress, direction } = particle
-                const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
-                if (notePosition) {
-                    const origin = {
-                        x: notePosition.xOffset + particleOrigin * notePosition.width,
-                        y: flyInHeight
-                    }
-                    const angle = direction * Math.PI // in radians
-                    const particleCoords = {
-                        x: origin.x + Math.cos(angle) * progress * 100,
-                        y: origin.y - Math.sin(angle) * progress * 100
-                    }
-                    const [r, g, b] = rgba(color.fillStyle)
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
-                    ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
+        const { newParticles } = frame
+        particles.push(...newParticles)
+        for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
+            const particle = particles[particleIndex]
+            const { note: { midiNoteNumber, color }, origin: particleOrigin, progress, direction } = particle
+            const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
+            if (notePosition) {
+                const origin = {
+                    x: notePosition.xOffset + particleOrigin * notePosition.width,
+                    y: flyInHeight
                 }
-            })
-        })
+                const angle = direction * Math.PI // in radians
+                const particleCoords = {
+                    x: origin.x + Math.cos(angle) * progress * 100,
+                    y: origin.y - Math.sin(angle) * progress * 100
+                }
+                const [r, g, b] = rgba(color.fillStyle)
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
+                ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
+            }
+            particle.advanceFrame()
+            if (particle.progress > 1) {
+                particles.splice(particleIndex, 1)
+                particleIndex--
+            }
+        }
+
     }
 
     return { drawFrame }
