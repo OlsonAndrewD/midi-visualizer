@@ -20,7 +20,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
     const halfBlackKeyWidth = blackKeyWidth * 0.5
     const blackKeyHeight = keyboardHeight * 0.65
     const octaveWidth = whiteKeyEdgeWidth * 7
-    const sustainRectHeight = 10
+    const sustainRectHeight = 5
 
     const whiteNotePitchBendOffsetX = (pitchBend) => (pitchBend || 0) * 0.8 * whiteKeyEdgeWidth
     const blackNotePitchBendOffsetX = (pitchBend) => (pitchBend || 0) * 0.8 * blackKeyWidth
@@ -75,12 +75,15 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                 gradient.addColorStop(0.7, sustainingNote.color.fillStyle)
                 gradient.addColorStop(1, 'white')
                 ctx.fillStyle = gradient
+                ctx.shadowColor = sustainingNote.color.fillStyle
+                ctx.shadowBlur = 10
                 ctx.fillRect(
                     index * whiteKeyEdgeWidth, // + Math.max(0, pitchBendOffsetX),
-                    keyboardTop,
+                    keyboardTop - sustainRectHeight,
                     whiteKeyEdgeWidth, // - Math.abs(pitchBendOffsetX),
                     sustainRectHeight
                 )
+                ctx.shadowBlur = 0
             }
             ctx.strokeRect(
                 index * whiteKeyEdgeWidth,
@@ -132,12 +135,15 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                 gradient.addColorStop(0.7, sustainingNote.color.fillStyle)
                 gradient.addColorStop(1, 'white')
                 ctx.fillStyle = gradient
+                ctx.shadowColor = sustainingNote.color.fillStyle
+                ctx.shadowBlur = 10
                 ctx.fillRect(
                     x + Math.max(0, pitchBendOffsetX),
-                    keyboardTop,
+                    keyboardTop - sustainRectHeight,
                     blackKeyWidth - Math.abs(pitchBendOffsetX),
                     sustainRectHeight
                 )
+                ctx.shadowBlur = 0
             }
         }
 
