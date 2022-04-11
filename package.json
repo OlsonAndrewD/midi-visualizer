@@ -23,6 +23,7 @@
     "canvas": "^2.9.0",
     "color-rgba": "^2.4.0",
     "lodash": "^4.17.21",
-    "midi-parser-js": "^4.0.4"
+    "midi-parser-js": "^4.0.4",
+    "prompt-sync": "^4.2.0"
   }
 }
