@@ -487,7 +487,7 @@ module.exports = ({
                     y: origin.y - Math.sin(angle) * progress * 100
                 }
                 const [r, g, b] = rgba(color.fillStyle)
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.max(0, 1 - progress * progress)})`
                 ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
             }
             particle.advanceFrame()

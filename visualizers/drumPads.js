@@ -152,6 +152,8 @@ module.exports = ({
     const flyInPathShapes = { linear, bezierCurve }
     const getFlyingNoteRectangle = flyInPathShapes[flyIn.shape || 'linear']()
 
+    const particles = []
+
     return ({
         prepareNotesForLayout: (notes) => {
             notes.forEach(note => note.end = note.start + 100)
@@ -223,28 +225,33 @@ module.exports = ({
             })
 
             // particles
-            const { particleSets } = frame
-            particleSets.forEach(({ sourceNote: { midiNoteNumber, color: { fillStyle } }, particles }) => {
-                particles.forEach(particle => {
-                    const { origin: particleOrigin, progress, direction } = particle
-                    const padIndex = padAssignments[midiNoteNumber]
-                    if (padIndex >= 0) {
-                        const destinationPad = padLocations[padIndex]
-                        const origin = {
-                            x: destinationPad.x + particleOrigin * destinationPad.width,
-                            y: destinationPad.y
-                        }
-                        const angle = direction * Math.PI // in radians
-                        const particleCoords = {
-                            x: origin.x + Math.cos(angle) * progress * 100,
-                            y: origin.y - Math.sin(angle) * progress * 100
-                        }
-                        const [r, g, b] = rgba(fillStyle)
-                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - progress})`
-                        ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
+            const { newParticles } = frame
+            particles.push(...newParticles)
+            for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
+                const particle = particles[particleIndex]
+                const { note: { midiNoteNumber, color: { fillStyle } }, origin: particleOrigin, progress, direction } = particle
+                const padIndex = padAssignments[midiNoteNumber]
+                if (padIndex >= 0) {
+                    const destinationPad = padLocations[padIndex]
+                    const origin = {
+                        x: destinationPad.x + particleOrigin * destinationPad.width,
+                        y: destinationPad.y
                     }
-                })
-            })
+                    const angle = direction * Math.PI // in radians
+                    const particleCoords = {
+                        x: origin.x + Math.cos(angle) * progress * 100,
+                        y: origin.y - Math.sin(angle) * progress * 100
+                    }
+                    const [r, g, b] = rgba(fillStyle)
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.max(0, 1 - progress * progress)})`
+                    ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
+                }
+                particle.advanceFrame()
+                if (particle.progress > 1) {
+                    particles.splice(particleIndex, 1)
+                    particleIndex--
+                }
+            }
         }
     })
 }
