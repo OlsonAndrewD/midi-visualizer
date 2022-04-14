@@ -4,18 +4,18 @@
     "noteImpactTime": 500,
     "impactSize": 40,
     "midiFileName": "test-data/test.mid",
-    "width": 960,
-    "height": 360,
+    "width": 1280,
+    "height": 720,
     "backgroundColor": "black",
     "flyIn": {
-        "type": "3d",
-        "shape": "linear"
+        "type": "topDown"
     },
     "visualizer": {
         "type": "keyboard",
-        "keyboardHeightProportion": 0.2
+        "keyboardHeightProportion": 0.15
     },
     "colorizer": {
-        "type": "trackRainbow"
+        "type": "noteColor",
+        "color": "cyan"
     }
 }
