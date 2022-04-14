@@ -5,3 +5,5 @@ frames
 *.mov
 test-data/Mixdown
 *.song
+test-data/Remy.mid
+test-data/Streetlights.mid
