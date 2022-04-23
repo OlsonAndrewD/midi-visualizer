@@ -1,7 +1,6 @@
 const { curryRight, last, round: lodashRound, sortBy, pick, chain, get } = require('lodash')
 const round2 = curryRight(lodashRound)(2)
 const path = require("path")
-const Particle = require('./particle')
 
 module.exports = ({ config, song }) => {
     const {
@@ -9,12 +8,6 @@ module.exports = ({ config, song }) => {
         fps,
         noteApproachTime = 1000,
         noteImpactTime = 500,
-        particles: {
-            perFrame: particlesPerFrame = 10,
-            lifetime: particleLifetime = 2000,
-            // angleSpread: particleAngleSpread = 0.5,
-            // distanceMultiplier: particleDistanceMultiplier = 0.8,
-        } = {},
         colorizer,
         noteMap,
     } = config
@@ -29,7 +22,6 @@ module.exports = ({ config, song }) => {
     const numFramesInNoteApproach = Math.round(noteApproachTime / 1000 * fps)
     const numFramesInNoteImpact = Math.round(noteImpactTime / 1000 * fps)
     const numFramesInEndPadding = Math.round(endPaddingTime / 1000 * fps)
-    const numFramesInParticleLifetime = Math.round(particleLifetime / 1000 * fps)
     const frames = Array(numFramesInNoteApproach + numFramesInSong + numFramesInEndPadding).fill(0).map((x, frameIndex) => ({
         frameIndex,
         flyingNotes: [],
@@ -42,7 +34,6 @@ module.exports = ({ config, song }) => {
     const frameNumberFor = songTime => Math.floor((songTime + noteApproachTime) / 1000 * fps)
     const noteProgressIncrementPerFrame = 1 / numFramesInNoteApproach
     const noteImpactProgressIncrementPerFrame = 1 / numFramesInNoteImpact
-    const particleProgressIncrementPerFrame = 1 / numFramesInParticleLifetime
     const frameOffsetPercent = songTime => -round2(songTime % frameLength / frameLength * noteProgressIncrementPerFrame)
 
     const pitchBendLookupByTrackAndFrame = chain(pitchBends)
@@ -132,14 +123,6 @@ module.exports = ({ config, song }) => {
                 sourceNote: note,
                 pitchBend: currentPitchBend?.amount || 0
             })
-        })
-
-        // Particles
-        frames.slice(
-            noteStartFrame,
-            frameNumberFor(note.sustainEnd || note.end)
-        ).forEach((frame) => {
-            frame.newParticles.push(...Array(particlesPerFrame).fill().map(() => new Particle(note, particleProgressIncrementPerFrame)))
         })
     })
 
