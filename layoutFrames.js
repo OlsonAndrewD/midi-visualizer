@@ -1,4 +1,4 @@
-const { curryRight, last, round: lodashRound, sortBy, pick, chain, get } = require('lodash')
+const { curryRight, last, round: lodashRound, sortBy, chain, get } = require('lodash')
 const round2 = curryRight(lodashRound)(2)
 const path = require("path")
 
@@ -14,11 +14,12 @@ module.exports = ({ config, song }) => {
     const { notes = [], pitchBends = [] } = song
 
     const frameLength = 1000 / fps
-    const numFramesInSong = ((lastNote) => {
+    const lastNote = last(sortBy(notes, 'end'))
+    const numFramesInSong = (() => {
         const end = lastNote.sustainEnd || lastNote.end
         const impactEnd = lastNote.start + noteImpactTime
         return Math.ceil(Math.max(end, impactEnd) / 1000 * fps)
-    })(last(sortBy(notes, 'end')))
+    })()
     const numFramesInNoteApproach = Math.round(noteApproachTime / 1000 * fps)
     const numFramesInNoteImpact = Math.round(noteImpactTime / 1000 * fps)
     const numFramesInEndPadding = Math.round(endPaddingTime / 1000 * fps)
@@ -50,14 +51,14 @@ module.exports = ({ config, song }) => {
         .value()
 
     const colorize = colorizer
-        ? require(`./${path.join("colorizers", colorizer.type)}`)(colorizer, noteMap)
+        ? require(`./${path.join("colorizers", colorizer.type)}`)({ ...colorizer, noteMap, lastNote })
         : (() => {
             const white = { fillStyle: 'white' }
             return () => white
         })()
 
     notes.forEach((note) => {
-        note.color = colorize(pick(note, ["midiNoteNumber", "track"]))
+        note.color = colorize(note)
         const noteStartFrameOffset = frameOffsetPercent(note.start)
         const noteEndFrameOffset = frameOffsetPercent(note.end)
         const noteHeight = (note.end - note.start) / noteApproachTime

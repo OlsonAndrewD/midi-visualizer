@@ -3,8 +3,8 @@ const { mapValues } = require("lodash")
 module.exports = ({
     defaultColor = 'white',
     noteColors = [],
-},
-noteMap) => {
+    noteMap
+}) => {
     defaultColor = { fillStyle: defaultColor }
     noteColors = mapValues(noteColors, color => ({ fillStyle: color }))
     const getColor = noteMap
