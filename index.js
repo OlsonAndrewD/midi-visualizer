@@ -1,82 +1,52 @@
 const readline = require('readline')
 readline.emitKeypressEvents(process.stdin)
-const prompt = require('prompt-sync')({sigint: true})
 const parseMidi = require('./parseMidi')
 const layoutFrames = require('./layoutFrames')
 const generateImages = require('./generateImages')
 const createVideo = require('./createVideo')
-const outputLine = require('./consoleColors')
-const {existsSync, readFileSync} = require("fs")
-const { orderBy, update, isEqual, omit } = require('lodash')
+const {existsSync, readFileSync, readdirSync, lstatSync} = require("fs")
+const { orderBy, omit } = require('lodash')
+const terminal = require('terminal-kit').terminal
+const path = require("path")
 
-const consoleStyles = {
-    moveCursorUp: (num) => {
-        return {lines: `\x1b[${num}A`}
-    },
-    moveCursorDown: (num) => {
-        return {lines: `\x1b[${num}B`}
-    },
-    moveCursorRight: (num) => {
-        return {columns: `\x1b[${num}C`}
-    },
-    moveCursorLeft: (num) => {
-        return {columns: `\x1b[${num}D`}
-    },
-    eraseLine: "\x1b[2K\r",
-    greenDone: "\x1b[38;5;40m\x1b[48;5;0mDone\x1b[0m",
-    underline: (text) => `\x1b[4m${text}\x1b[24m`
-}
+terminal.windowTitle("MIDI Visualizer")
 
-function selectOption(options, shortcuts) {
-    if(!isEqual([...new Set(shortcuts)], shortcuts)) throw new Error("All shortcuts must be unique.")
-    process.stdin.setRawMode(true)
-    return new Promise((resolve) => {
-        new Promise((resolve) => {
-            var selected = 0
-            function updateOptions() {
-                options.forEach(() => console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + consoleStyles.moveCursorUp(1).lines))
-                options.forEach((option, i) => {
-                    console.log(`${i == selected ? ">" : " "} ${option}`)
-                })
-            }
-            options.forEach(() => console.log())
-            updateOptions()
-            function keyHandler(str, key) {
-                if(key && key.name == "c" && key.ctrl) {
-                    process.exit(0)
-                }
-                if(key.name == "up") {
-                    selected -= 1
-                    if(selected <= -1) selected = options.length - 1
-                }
-                if(key.name == "down") {
-                    selected += 1
-                    if(selected >= options.length) selected = 0
-                }
-                shortcuts.forEach((shortcut, i) => {
-                    if(str == shortcut) {
-                        selected = i
-                        updateOptions()
-                        process.stdin.off('keypress', keyHandler)
-                        resolve(selected)
-                    }
-                })
-                if(key.name == "return" || key.name == "enter") {
-                    console.log(consoleStyles.moveCursorUp(2).lines)
+function showFileExplorer(startDir, fileType) {
+    return new Promise((resolve, reject) => {
+        var currentDir = startDir
+        if(currentDir == null) currentDir = process.cwd()
+        var options
+        function updateOptions() {
+            options = ["..", ...readdirSync(currentDir).filter(file => existsSync(path.join(currentDir, file)) && lstatSync(path.join(currentDir, file)).isDirectory() || file.endsWith(fileType)), "Exit"]
+        }
+        updateOptions()
+        function showFiles() {
+            terminal.grabInput({mouse: "motion"})
+            terminal(`Current Folder: ${currentDir}\n`)
+            terminal.gridMenu(options, {
+                submittedStyle: terminal.bgDefaultColor.bold
+            }, (error, response) => {
+                terminal.grabInput(false)
+                if(response.selectedIndex == 0) {
+                    currentDir = path.join(currentDir, "../")
                     updateOptions()
-                    resolve(selected)
-                    process.stdin.off('keypress', keyHandler)
+                    showFiles()
+                } else if(response.selectedIndex == options.length - 1) {
+                    reject()
+                    process.exit(0)
                 } else {
-                    console.log(consoleStyles.eraseLine, consoleStyles.moveCursorUp(1).lines)
+                    var selectedPath = path.join(currentDir, options[response.selectedIndex])
+                    if(existsSync(selectedPath) && lstatSync(selectedPath).isDirectory()) {
+                        currentDir = selectedPath
+                        updateOptions()
+                        showFiles()
+                    } else if(existsSync(selectedPath)) {
+                        resolve(selectedPath)
+                    }
                 }
-                updateOptions()
-            }
-            process.stdin.on('keypress', keyHandler)
-        }).then((output) => {
-            console.log(consoleStyles.eraseLine, consoleStyles.moveCursorUp(1).lines)
-            process.stdin.setRawMode(false)
-            resolve(output)
-        })
+            })
+        }
+        showFiles()
     })
 }
 
@@ -88,50 +58,57 @@ class Visualizer {
                 ...config.visualizer
             })
             
-            console.log('Parsing MIDI file...')
+            terminal('Parsing MIDI file...\n')
             var song
             try {
                 song = parseMidi(config.midiFileName)
             } catch (err) {
-                outputLine(196, 0, "Error: Failed to parse MIDI.")
+                terminal.brightRed.bgBlack("Error: Failed to parse MIDI.")
                 console.error(err)
+                terminal.windowTitle("")
                 process.exit(1)
             }
-            console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + "Parsing MIDI file... " + consoleStyles.greenDone)
+            terminal.up(1)
+            terminal('Parsing MIDI file... ').bgBlack.brightGreen("Done\n")
             
             song.notes = orderBy(song.notes, ['start', 'midiNoteNumber'])
             
             visualizer.prepareNotesForLayout && visualizer.prepareNotesForLayout(song.notes)
             
-            console.log(`Laying out and coloring frames for ${song.notes.length} notes...`)
+            terminal(`Laying out and coloring frames for ${song.notes.length} notes...\n`)
             var frames
             try {
                 frames = layoutFrames({config, song})
             } catch (err) {
-                outputLine(196, 0, "Error: Laying out or coloring frames failed.")
+                terminal.brightRed.bgBlack("Error: Laying out or coloring frames failed.\n")
                 console.error(err)
+                terminal.windowTitle("")
                 process.exit(1)
             }
-            console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + `Laying out frames for ${song.notes.length} notes... ` + consoleStyles.greenDone)
+            terminal.up(1)
+            terminal(`Laying out and coloring frames for ${song.notes.length} notes... `).bgBlack.brightGreen("Done\n")
             
             var numberOfFrames = frames.length
-            console.log(`Generating ${numberOfFrames} frame images...`)
+            terminal(`Generating ${numberOfFrames} frame images...\n`)
             var imageDirectory
             try {
                 imageDirectory = generateImages(visualizer.drawFrame, frames, config)
             } catch (err) {
-                outputLine(196, 0, "Error: Couldn't draw frames.")
+                terminal.brightRed.bgBlack("Error: Couldn't draw frames.\n")
                 console.error(err)
+                terminal.windowTitle("")
                 process.exit(1)
             }
-            console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + `Generating ${numberOfFrames} frame images... ` + consoleStyles.greenDone)
+            terminal.up(1)
+            terminal(`Generating ${numberOfFrames} frame images... `).bgBlack.brightGreen("Done\n")
             // createVideo(imageDirectory, config.fps, config.outputFileName)
             
-            outputLine(40, 0, `     ___    ____       __                 __
+            terminal.brightGreen.bgBlack(`     ___    ____       __                 __
     /   |  / / /  ____/ /___  ____  ___  / /
    / /| | / / /  / __  / __ \\/ __ \\/ _ \\/ / 
   / ___ |/ / /  / /_/ / /_/ / / / /  __/_/  
- /_/  |_/_/_/   \\____/\\____/_/ /_/\\___(_)   `)
+ /_/  |_/_/_/   \\____/\\____/_/ /_/\\___(_)   \n`)
+            terminal.windowTitle("")
             process.exit(0)
         }
     }
@@ -159,74 +136,76 @@ if(existsSync(configFile)) {
         configProps.forEach(prop => {
             if(!shouldError && !config[prop]) {
                 shouldError = true
-                outputLine(196, 0, "Error: Missing config props:")
+                terminal.brightRed.bgBlack("Error: Missing config props:\n")
             }
-            if(!config[prop]) outputLine(196, 0, `  ${prop}`.padEnd(28, " "))
+            if(!config[prop]) terminal.brightRed.bgBlack(`  ${prop}`.padEnd(28, " ") + "\n")
         })
         if(shouldError) {
+            terminal.windowTitle("")
             process.exit(1)
         } else {
             const visualizer = new Visualizer(config)
             visualizer.start()
         }
     } catch (err) {
-        outputLine(196, 0, "Error: Could not parse config JSON.")
+        terminal.brightRed.bgBlack("Error: Could not parse config JSON.\n")
         console.error(err)
+        terminal.windowTitle("")
         process.exit(1)
     }
 } else if(!process.argv.slice(2)[0]) {
-    console.log("Welcome to the MIDI config file creator! Do you want to create a new config file and run it or run an existing config file?")
-    selectOption([
-        `Create ${consoleStyles.underline("n")}ew`,
-        `Run ${consoleStyles.underline("e")}xisting`,
-        `E${consoleStyles.underline("x")}it`
-    ], [
-        "n",
-        "e",
-        "x"
-    ]).then(selection => {
+    terminal("Welcome to the MIDI config file creator! Do you want to create a new config file and run it or run an existing config file?\n")
+    terminal.grabInput({mouse: "motion"})
+    terminal.singleColumnMenu([
+        "Create new",
+        "Run existing",
+        "Exit"
+    ], {
+        submittedStyle: terminal.inverse
+    }, (error, response) => {
+        terminal.grabInput(false)
+        var selection = response.selectedIndex
         if(selection === 0) {
-            console.log("Work in progress. Selected: Create new.")
+            terminal("Work in progress. Selected: Create new.\n")
         }
         if(selection === 1) {
-            function enterFileName(incorrect) {
-                console.log(`${consoleStyles.eraseLine}\r${consoleStyles.moveCursorUp(1).lines}`)
-                var answer = prompt(`${incorrect ? "File doesn't exist. " : ""}Please enter the path to the config file: `)
-                if(existsSync(answer)) {
-                    console.log(`Tip: To skip this interface, add the file path after the command you used to run this. Example:
-> midi-visualizer ${answer}`)
-                    try {
-                        config = JSON.parse(readFileSync(answer, {encoding: "utf8"}))
-                        var shouldError = false
-                        configProps.forEach(prop => {
-                            if(!shouldError && !config[prop]) {
-                                shouldError = true
-                                outputLine(196, 0, "Error: Missing config props:")
-                            }
-                            if(!config[prop]) outputLine(196, 0, `  ${prop}`.padEnd(28, " "))
-                        })
-                        if(shouldError) {
-                            process.exit(1)
-                        } else {
-                            const visualizer = new Visualizer(config)
-                            visualizer.start()
+            showFileExplorer(null, ".json").then(answer => {
+                terminal(`Tip: To skip this interface, add the file path after the command you used to run this. Example:
+> midi-visualizer ${answer}\n`)
+                try {
+                    config = JSON.parse(readFileSync(answer, {encoding: "utf8"}))
+                    var shouldError = false
+                    configProps.forEach(prop => {
+                        if(!shouldError && !config[prop]) {
+                            shouldError = true
+                            terminal.brightRed.bgBlack("Error: Missing config props:")
                         }
-                    } catch (err) {
-                        outputLine(196, 0, "Error: Could not parse config JSON.")
-                        console.error(err)
+                        if(!config[prop]) terminal.brightRed.bgBlack(`  ${prop}`.padEnd(28, " "))
+                    })
+                    if(shouldError) {
+                        terminal.windowTitle("")
                         process.exit(1)
+                    } else {
+                        const visualizer = new Visualizer(config)
+                        visualizer.start()
                     }
-                } else {
-                    enterFileName(true)
+                } catch (err) {
+                    terminal.brightRed.bgBlack("Error: Could not parse config JSON.")
+                    console.error(err)
+                    terminal.windowTitle("")
+                    process.exit(1)
                 }
-            }
-            enterFileName(false)
+            })
+        } else {
+            enterFileName(true)
         }
         if(selection === 2) {
+            terminal.windowTitle("")
             process.exit(0)
         }
     })
 } else {
-    outputLine(196, 0, `Error: ${configFile} does not exist.`)
+    terminal.brightRed.bgBlack(`Error: ${configFile} does not exist.`)
+    terminal.windowTitle("")
     process.exit(1)
 }
