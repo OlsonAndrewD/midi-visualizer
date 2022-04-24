@@ -196,8 +196,6 @@ if(existsSync(configFile)) {
                     process.exit(1)
                 }
             })
-        } else {
-            enterFileName(true)
         }
         if(selection === 2) {
             terminal.windowTitle("")
