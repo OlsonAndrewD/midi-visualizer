@@ -1,6 +1,5 @@
 const readline = require('readline')
 readline.emitKeypressEvents(process.stdin)
-process.stdin.setRawMode(true)
 const prompt = require('prompt-sync')({sigint: true})
 const parseMidi = require('./parseMidi')
 const layoutFrames = require('./layoutFrames')
@@ -10,16 +9,7 @@ const outputLine = require('./consoleColors')
 const {existsSync, readFileSync} = require("fs")
 const { orderBy, update, isEqual, omit } = require('lodash')
 
-process.stdin.on('keypress', (str, key) => {
-    if(key.sequence == "\x03") {
-        console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
-        process.exit(0)
-    }
-})
-
 const consoleStyles = {
-    hideCursor: "\x1b[?25l",
-    showCursor: "\x1b[?25h",
     moveCursorUp: (num) => {
         return {lines: `\x1b[${num}A`}
     },
@@ -39,6 +29,7 @@ const consoleStyles = {
 
 function selectOption(options, shortcuts) {
     if(!isEqual([...new Set(shortcuts)], shortcuts)) throw new Error("All shortcuts must be unique.")
+    process.stdin.setRawMode(true)
     return new Promise((resolve) => {
         new Promise((resolve) => {
             var selected = 0
@@ -51,8 +42,7 @@ function selectOption(options, shortcuts) {
             options.forEach(() => console.log())
             updateOptions()
             function keyHandler(str, key) {
-                if(key.sequence == "\x03") {
-                    console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
+                if(key && key.name == "c" && key.ctrl) {
                     process.exit(0)
                 }
                 if(key.name == "up") {
@@ -84,12 +74,11 @@ function selectOption(options, shortcuts) {
             process.stdin.on('keypress', keyHandler)
         }).then((output) => {
             console.log(consoleStyles.eraseLine, consoleStyles.moveCursorUp(1).lines)
+            process.stdin.setRawMode(false)
             resolve(output)
         })
     })
 }
-
-console.log(consoleStyles.hideCursor + consoleStyles.moveCursorUp(1).lines)
 
 class Visualizer {
     constructor(config) {
@@ -106,7 +95,6 @@ class Visualizer {
             } catch (err) {
                 outputLine(196, 0, "Error: Failed to parse MIDI.")
                 console.error(err)
-                console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
                 process.exit(1)
             }
             console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + "Parsing MIDI file... " + consoleStyles.greenDone)
@@ -122,7 +110,6 @@ class Visualizer {
             } catch (err) {
                 outputLine(196, 0, "Error: Laying out or coloring frames failed.")
                 console.error(err)
-                console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
                 process.exit(1)
             }
             console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + `Laying out frames for ${song.notes.length} notes... ` + consoleStyles.greenDone)
@@ -135,13 +122,12 @@ class Visualizer {
             } catch (err) {
                 outputLine(196, 0, "Error: Couldn't draw frames.")
                 console.error(err)
-                console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
                 process.exit(1)
             }
             console.log(consoleStyles.moveCursorUp(1).lines + consoleStyles.eraseLine + `Generating ${numberOfFrames} frame images... ` + consoleStyles.greenDone)
             // createVideo(imageDirectory, config.fps, config.outputFileName)
             
-            outputLine(40, 0, `${consoleStyles.showCursor}     ___    ____       __                 __
+            outputLine(40, 0, `     ___    ____       __                 __
     /   |  / / /  ____/ /___  ____  ___  / /
    / /| | / / /  / __  / __ \\/ __ \\/ _ \\/ / 
   / ___ |/ / /  / /_/ / /_/ / / / /  __/_/  
@@ -151,10 +137,10 @@ class Visualizer {
     }
 }
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-})
+// const rl = readline.createInterface({
+//     input: process.stdin,
+//     output: process.stdout
+// })
 
 var config = {}
 var configProps = [
@@ -178,7 +164,6 @@ if(existsSync(configFile)) {
             if(!config[prop]) outputLine(196, 0, `  ${prop}`.padEnd(28, " "))
         })
         if(shouldError) {
-            console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
             process.exit(1)
         } else {
             const visualizer = new Visualizer(config)
@@ -190,12 +175,6 @@ if(existsSync(configFile)) {
         process.exit(1)
     }
 } else if(!process.argv.slice(2)[0]) {
-    // process.stdin.on('keypress', (str, key) => {
-    //     if(key.sequence == "\x03") {
-    //         console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
-    //         process.exit(0)
-    //     }
-    // })
     console.log("Welcome to the MIDI config file creator! Do you want to create a new config file and run it or run an existing config file?")
     selectOption([
         `Create ${consoleStyles.underline("n")}ew`,
@@ -212,9 +191,9 @@ if(existsSync(configFile)) {
         if(selection === 1) {
             function enterFileName(incorrect) {
                 console.log(`${consoleStyles.eraseLine}\r${consoleStyles.moveCursorUp(1).lines}`)
-                var answer = prompt(`${consoleStyles.showCursor}${incorrect ? "File doesn't exist. " : ""}Please enter the path to the config file: `)
+                var answer = prompt(`${incorrect ? "File doesn't exist. " : ""}Please enter the path to the config file: `)
                 if(existsSync(answer)) {
-                    console.log(`${consoleStyles.hideCursor}Tip: To skip this interface, add the file path after the command you used to run this. Example:
+                    console.log(`Tip: To skip this interface, add the file path after the command you used to run this. Example:
 > midi-visualizer ${answer}`)
                     try {
                         config = JSON.parse(readFileSync(answer, {encoding: "utf8"}))
@@ -227,7 +206,6 @@ if(existsSync(configFile)) {
                             if(!config[prop]) outputLine(196, 0, `  ${prop}`.padEnd(28, " "))
                         })
                         if(shouldError) {
-                            console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
                             process.exit(1)
                         } else {
                             const visualizer = new Visualizer(config)
@@ -245,12 +223,10 @@ if(existsSync(configFile)) {
             enterFileName(false)
         }
         if(selection === 2) {
-            console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
             process.exit(0)
         }
     })
 } else {
     outputLine(196, 0, `Error: ${configFile} does not exist.`)
-    console.log(consoleStyles.showCursor + consoleStyles.moveCursorUp(1).lines)
     process.exit(1)
 }
