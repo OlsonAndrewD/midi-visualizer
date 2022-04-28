@@ -1,4 +1,5 @@
 const interpolate = require("color-interpolate")
+const { last } = require("lodash")
 const numberOfColorChanges = 50
 const progressIncrement = 1 / numberOfColorChanges
 
@@ -20,5 +21,5 @@ module.exports = ({
         lookup.push({ fillStyle: colorMap(progress)})
         progress += progressIncrement
     }
-    return ({ start }) => lookup[Math.floor(start / lastNoteStart / progressIncrement)]
+    return ({ start }) => lookup[Math.floor(start / lastNoteStart / progressIncrement)] || last(lookup)
 }

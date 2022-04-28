@@ -1,7 +1,8 @@
-const { assign } = require("lodash")
+const { assign, round, curryRight } = require("lodash")
 const BaseParticle = require("./baseParticle")
 const rgba = require('color-rgba')
 const twoPi = 2 * Math.PI
+const round2 = curryRight(round)(2)
 
 class BubbleParticle extends BaseParticle {
     constructor (progressIncrementPerFrame, color, origin, distanceToTravel, waveWidth) {
@@ -19,12 +20,12 @@ class BubbleParticle extends BaseParticle {
         const [r, g, b] = rgba(this.color.fillStyle)
         const easeInProgress = Math.pow(this.progress, 3)
         const easeOutProgress = 1 - Math.pow(1 - this.progress, 3)
-        ctx.strokeStyle = ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.max(0, 0.8 - 0.8 * easeInProgress)})`
+        ctx.strokeStyle = ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.max(0, round2(0.5 - 0.5 * easeInProgress))})`
         ctx.beginPath()
         ctx.arc(
             this.origin.x + this.xMultiplier * Math.sin(this.sineOffset + easeOutProgress * this.numPeriods * Math.PI) * this.waveWidth,
             this.origin.y - this.yOffset - this.distanceToTravel * easeInProgress,
-            2,
+            3,
             0,
             twoPi
         )
