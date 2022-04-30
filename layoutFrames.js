@@ -100,7 +100,7 @@ module.exports = ({ config, song }) => {
             ) || currentPitchBend
             frame.flyingNotes.push({
                 sourceNote: note,
-                startProgress: Math.min(1, round2(1 + noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame)),
+                startProgress: round2(1 + noteStartFrameOffset + frameIndex * noteProgressIncrementPerFrame),
                 endProgress: Math.min(1, round2(1 + noteEndFrameOffset - noteHeight + frameIndex * noteProgressIncrementPerFrame)),
                 isPlaying: true
             })

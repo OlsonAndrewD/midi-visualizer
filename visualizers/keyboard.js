@@ -4,6 +4,8 @@ const { calculateBezierCurvePoint, oscillate } = require("./utils")
 const LinearPathParticle = require("../particles/linearPathParticle")
 const BubbleParticle = require("../particles/bubbleParticle")
 const RippleParticle = require("../particles/rippleParticle")
+const { Image } = require("canvas")
+const fs = require('fs')
 
 const whiteKeyMidiNoteNumbers = [
     21, // A0
@@ -65,8 +67,9 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                 )
             }
             const { sourceNote: sustainingNote, pitchBend: sustainingNotePitchBend } = sustainingNoteLookup[midiNoteNumber] || {}
-            if (sustainingNote) {
-                const pitchBendOffsetX = whiteNotePitchBendOffsetX(sustainingNotePitchBend)
+            if (playingNote || sustainingNote) {
+                const note = sustainingNote || playingNote
+                const pitchBendOffsetX = whiteNotePitchBendOffsetX(sustainingNotePitchBend || playingNotePitchBend)
                 const gradient = ctx.createLinearGradient(
                     (index - 0.5) * whiteKeyEdgeWidth + pitchBendOffsetX,
                     keyboardTop,
@@ -74,11 +77,11 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                     keyboardTop
                 )
                 gradient.addColorStop(0, 'white')
-                gradient.addColorStop(0.3, sustainingNote.color.fillStyle)
-                gradient.addColorStop(0.7, sustainingNote.color.fillStyle)
+                gradient.addColorStop(0.3, note.color.fillStyle)
+                gradient.addColorStop(0.7, note.color.fillStyle)
                 gradient.addColorStop(1, 'white')
                 ctx.fillStyle = gradient
-                ctx.shadowColor = sustainingNote.color.fillStyle
+                ctx.shadowColor = note.color.fillStyle
                 ctx.shadowBlur = 10
                 ctx.fillRect(
                     index * whiteKeyEdgeWidth, // + Math.max(0, pitchBendOffsetX),
@@ -125,8 +128,9 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
             }
 
             const { sourceNote: sustainingNote, pitchBend: sustainingNotePitchBend } = sustainingNoteLookup[midiNoteNumber] || {}
-            if (sustainingNote) {
-                const pitchBendOffsetX = blackNotePitchBendOffsetX(sustainingNotePitchBend)
+            if (playingNote || sustainingNote) {
+                const note = sustainingNote || playingNote
+                const pitchBendOffsetX = blackNotePitchBendOffsetX(sustainingNotePitchBend || playingNotePitchBend)
                 const gradient = ctx.createLinearGradient(
                     x - 0.5 * blackKeyWidth + pitchBendOffsetX,
                     keyboardTop,
@@ -134,11 +138,11 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
                     keyboardTop
                 )
                 gradient.addColorStop(0, 'white')
-                gradient.addColorStop(0.3, sustainingNote.color.fillStyle)
-                gradient.addColorStop(0.7, sustainingNote.color.fillStyle)
+                gradient.addColorStop(0.3, note.color.fillStyle)
+                gradient.addColorStop(0.7, note.color.fillStyle)
                 gradient.addColorStop(1, 'white')
                 ctx.fillStyle = gradient
-                ctx.shadowColor = sustainingNote.color.fillStyle
+                ctx.shadowColor = note.color.fillStyle
                 ctx.shadowBlur = 10
                 ctx.fillRect(
                     x + Math.max(0, pitchBendOffsetX),
@@ -255,6 +259,26 @@ const drawNote2d = ({ flyInHeight }) => (notePosition, startProgress, endProgres
         notePosition.width,
         startProgress * flyInHeight - endProgress * flyInHeight
     )
+}
+
+const drawLiquidNote = ({ flyInHeight, noteApproachTime, width }) => {
+    const gravity = flyInHeight / (0.5 * noteApproachTime * noteApproachTime)
+    const dropWidth = width / 52
+    const dropHeight = dropWidth * 1.6
+    const drop = new Image()
+    drop.src = fs.readFileSync('./images/water-drop-small.png')
+    const drawDrop = (x, y, ctx) => {
+        ctx.drawImage(drop, x, y, dropWidth, dropHeight)
+    }
+    return (notePosition, startProgress, endProgress, ctx) => {
+        if (startProgress <= 1) {
+            drawDrop(
+                notePosition.xOffset,
+                0.5 * gravity * Math.pow(startProgress * noteApproachTime, 2) - dropHeight,
+                ctx
+            )
+        }
+    }
 }
 
 const drawNote3d = ({
@@ -387,6 +411,7 @@ const drawNote3d = ({
 const flyingNoteDrawers = {
     'topDown': drawNote2d,
     '3d': drawNote3d,
+    'liquidDrops': drawLiquidNote,
 }
 
 const particleFactories = {
@@ -433,6 +458,7 @@ module.exports = ({
     impactSize = 60,
     width = 480,
     height = 360,
+    noteApproachTime,
     particles: {
         type: particleType = 'linearPath',
         perFrame: particlesPerFrame = 10,
@@ -455,6 +481,7 @@ module.exports = ({
         fps,
         width,
         height,
+        noteApproachTime
     })
 
     const particles = []

@@ -1,14 +1,14 @@
 {
-    "fps": 60,
-    "noteApproachTime": 2000,
+    "fps": 30,
+    "noteApproachTime": 1000,
     "noteImpactTime": 500,
     "impactSize": 80,
-    "midiFileName": "test-data/test.mid",
+    "midiFileName": "test-data/Streetlights.mid",
     "width": 640,
     "height": 360,
     "backgroundColor": "black",
     "flyIn": {
-        "type": "topDown"
+        "type": "liquidDrops"
     },
     "visualizer": {
         "type": "keyboard",
@@ -20,7 +20,7 @@
     },
     "particles": {
         "type": "ripple",
-        "oneEveryNFrames": 3,
-        "lifetime": 4000
+        "oneEveryNFrames": 14,
+        "lifetime": 3000
     }
 }
