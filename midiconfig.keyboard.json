@@ -1,5 +1,5 @@
 {
-    "fps": 10,
+    "fps": 60,
     "noteApproachTime": 2000,
     "noteImpactTime": 500,
     "impactSize": 80,
@@ -19,7 +19,8 @@
         "color": "cyan"
     },
     "particles": {
-        "type": "bubble",
-        "perFrame": 30
+        "type": "ripple",
+        "oneEveryNFrames": 3,
+        "lifetime": 4000
     }
 }

@@ -1,6 +1,6 @@
-const { curryRight, last, round: lodashRound, sortBy, chain, get } = require('lodash')
-const round2 = curryRight(lodashRound)(2)
+const { last, sortBy, chain, get } = require('lodash')
 const path = require("path")
+const round2 = require('./round2')
 
 module.exports = ({ config, song }) => {
     const {

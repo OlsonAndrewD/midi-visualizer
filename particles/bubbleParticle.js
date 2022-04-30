@@ -1,8 +1,8 @@
-const { assign, round, curryRight } = require("lodash")
+const { assign } = require("lodash")
 const BaseParticle = require("./baseParticle")
 const rgba = require('color-rgba')
+const round2 = require("../round2")
 const twoPi = 2 * Math.PI
-const round2 = curryRight(round)(2)
 
 class BubbleParticle extends BaseParticle {
     constructor (progressIncrementPerFrame, color, origin, distanceToTravel, waveWidth) {

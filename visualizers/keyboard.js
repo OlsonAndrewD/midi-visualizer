@@ -3,6 +3,7 @@ const rgba = require('color-rgba')
 const { calculateBezierCurvePoint, oscillate } = require("./utils")
 const LinearPathParticle = require("../particles/linearPathParticle")
 const BubbleParticle = require("../particles/bubbleParticle")
+const RippleParticle = require("../particles/rippleParticle")
 
 const whiteKeyMidiNoteNumbers = [
     21, // A0
@@ -411,6 +412,17 @@ const particleFactories = {
             flyInHeight,
             notePosition.width * 0.25
         )
+    }),
+    ripple: (progressIncrementPerFrame, flyInHeight) => ({
+        createParticle: (notePosition, color) => new RippleParticle(
+            progressIncrementPerFrame,
+            color,
+            {
+                x: notePosition.xOffset + 0.5 * notePosition.width,
+                y: flyInHeight - 1
+            },
+            flyInHeight
+        )
     })
 }
 
@@ -424,6 +436,7 @@ module.exports = ({
     particles: {
         type: particleType = 'linearPath',
         perFrame: particlesPerFrame = 10,
+        oneEveryNFrames: oneParticleEveryNFrames = null,
         lifetime: particleLifetime = 2000,
     } = {}
 }) => {
@@ -448,6 +461,9 @@ module.exports = ({
     const numFramesInParticleLifetime = Math.round(particleLifetime / 1000 * fps)
     const particleProgressIncrementPerFrame = 1 / numFramesInParticleLifetime
     const particleFactory = (particleFactories[particleType] || noop)(particleProgressIncrementPerFrame, flyInHeight)
+    const numParticlesThisFrame = oneParticleEveryNFrames
+        ? (frameIndex) => frameIndex % oneParticleEveryNFrames === 0 ? 1 : 0
+        : () => particlesPerFrame
 
     const drawFrame = (ctx, frame, frameIndex) => {
         // flying notes
@@ -510,7 +526,7 @@ module.exports = ({
             const newParticles = chain([...frame.playingNotes, ...frame.sustainingNotes])
                 .map('sourceNote')
                 .uniqBy(({ midiNoteNumber, color: { fillStyle } }) => `${midiNoteNumber}_${fillStyle}`)
-                .flatMap(note => Array(particlesPerFrame).fill().map(() => ({ note })))
+                .flatMap(note => Array(numParticlesThisFrame(frameIndex)).fill().map(() => ({ note })))
                 .value()
             particles.push(...newParticles.map(particle => {
                 const { note: { midiNoteNumber, color } } = particle

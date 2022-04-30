@@ -1,7 +1,7 @@
-const { assign, curryRight, round } = require("lodash")
+const { assign } = require("lodash")
 const BaseParticle = require("./baseParticle")
 const rgba = require('color-rgba')
-const round2 = curryRight(round)(2)
+const round2 = require("../round2")
 
 class LinearPathParticle extends BaseParticle {
     constructor (progressIncrementPerFrame, color, origin, distanceToTravel) {
