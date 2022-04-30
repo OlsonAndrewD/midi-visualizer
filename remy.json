@@ -1,0 +1,32 @@
+{
+    "fps": 60,
+    "noteApproachTime": 2000,
+    "noteImpactTime": 500,
+    "impactSize": 80,
+    "midiFileName": "test-data/Remy.mid",
+    "width": 1280,
+    "height": 720,
+    "backgroundColor": "black",
+    "flyIn": {
+        "type": "topDown"
+    },
+    "visualizer": {
+        "type": "keyboard",
+        "keyboardHeightProportion": 0.15
+    },
+    "colorizer": {
+        "type": "gradualCycle",
+        "colors": [
+            "#00ffff",
+            "#2c5dff",
+            "#bd4aff",
+            "#ff82df",
+            "#ffa3a3",
+            "#dafd73",
+            "#00ffff"
+        ]
+    },
+    "particles": {
+        "perFrame": 1
+    }
+}
