@@ -1,11 +1,11 @@
 {
-    "fps": 30,
+    "fps": 10,
     "noteApproachTime": 2000,
     "noteImpactTime": 500,
-    "impactSize": 40,
+    "impactSize": 80,
     "midiFileName": "test-data/test.mid",
-    "width": 1280,
-    "height": 720,
+    "width": 640,
+    "height": 360,
     "backgroundColor": "black",
     "flyIn": {
         "type": "topDown"
@@ -17,5 +17,9 @@
     "colorizer": {
         "type": "noteColor",
         "color": "cyan"
+    },
+    "particles": {
+        "type": "bubble",
+        "perFrame": 30
     }
 }
