@@ -20,7 +20,7 @@
     },
     "particles": {
         "type": "ripple",
-        "oneEveryNFrames": 14,
+        "oneEveryNMilliseconds": 500,
         "lifetime": 3000
     }
 }
