@@ -15,8 +15,16 @@
         "keyboardHeightProportion": 0.15
     },
     "colorizer": {
-        "type": "noteColor",
-        "color": "cyan"
+        "type": "gradualCycle",
+        "colors": [
+            "#00ffff",
+            "#2c5dff",
+            "#bd4aff",
+            "#ff82df",
+            "#ffa3a3",
+            "#dafd73",
+            "#00ffff"
+        ]
     },
     "particles": {
         "type": "ripple",

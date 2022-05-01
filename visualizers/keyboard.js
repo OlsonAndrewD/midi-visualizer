@@ -6,6 +6,7 @@ const BubbleParticle = require("../particles/bubbleParticle")
 const RippleParticle = require("../particles/rippleParticle")
 const { Image } = require("canvas")
 const fs = require('fs')
+const { default: SvgPath } = require('svg-path-to-canvas')
 
 const whiteKeyMidiNoteNumbers = [
     21, // A0
@@ -263,18 +264,28 @@ const drawNote2d = ({ flyInHeight }) => (notePosition, startProgress, endProgres
 
 const drawLiquidNote = ({ flyInHeight, noteApproachTime, width }) => {
     const gravity = flyInHeight / (0.5 * noteApproachTime * noteApproachTime)
-    const dropWidth = width / 52
-    const dropHeight = dropWidth * 1.6
-    const drop = new Image()
-    drop.src = fs.readFileSync('./images/water-drop-small.png')
+    
+    // source: https://www.svgrepo.com/svg/58467/water-drop
+    const liquidNotePath = 'M132.281,264.564c51.24,0,92.931-41.681,92.931-92.918c0-50.18-87.094-164.069-90.803-168.891L132.281,0l-2.128,2.773c-3.704,4.813-90.802,118.71-90.802,168.882C39.352,222.883,81.042,264.564,132.281,264.564z'
+    const svgNote = new SvgPath(liquidNotePath).scale(width / 640 * 0.05)
+    const [centerX] = svgNote.center
+    const [dropWidth, dropHeight] = svgNote.size
+    svgNote.translate(-centerX, -dropHeight)
+    
     const drawDrop = (x, y, ctx) => {
-        ctx.drawImage(drop, x, y, dropWidth, dropHeight)
+        svgNote
+            .save()
+            .translate(x, y)
+            .beginPath()
+            .to(ctx)
+            .fill()
+        svgNote.restore()
     }
     return (notePosition, startProgress, endProgress, ctx) => {
         if (startProgress <= 1) {
             drawDrop(
-                notePosition.xOffset,
-                0.5 * gravity * Math.pow(startProgress * noteApproachTime, 2) - dropHeight,
+                notePosition.xOffset + 0.5 * notePosition.width,
+                0.5 * gravity * Math.pow(startProgress * noteApproachTime, 2),
                 ctx
             )
         }

@@ -26,6 +26,7 @@
     "color-rgba": "^2.4.0",
     "lodash": "^4.17.21",
     "midi-parser-js": "^4.0.4",
+    "svg-path-to-canvas": "^1.11.3",
     "terminal-kit": "^2.4.0"
   }
 }
