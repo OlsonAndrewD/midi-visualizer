@@ -1,17 +1,45 @@
 const { set, reduce, reverse } = require("lodash")
 const rgba = require('color-rgba')
 const { calculateBezierCurvePoint, oscillate } = require("./utils")
+const { create: createParticleSet } = require("../particles/particleSet")
+const LinearPathParticle = require("../particles/linearPathParticle")
 
-module.exports = ({
-    noteMap,
-    padHeight,
-    padOrder,
-    flyIn,
-    fps,
-    impactSize = 50,
-    width,
-    height
-}) => {
+const particleFactories = {
+    linearPath: (fps, particleLifetime, getPadLocation) => ({
+        createParticle: (midiNoteNumber, color) => {
+            const padLocation = getPadLocation(midiNoteNumber)
+            return padLocation
+                ? new LinearPathParticle(
+                    fps,
+                    particleLifetime,
+                    color,
+                    {
+                        x: padLocation.x + Math.random() * padLocation.width,
+                        y: padLocation.y - 1
+                    },
+                    200
+                )
+                : null
+        }
+    })
+}
+
+module.exports = (config) => {
+    const {
+        noteMap,
+        padHeight,
+        padOrder,
+        flyIn,
+        fps,
+        impactSize = 50,
+        width,
+        height,
+        particles: {
+            type: particleType = 'linearPath',
+            lifetime: particleLifetime = 2000,
+        }
+    } = config
+
     const getMidiNoteNumber = (() => {
         const lookup = reduce(
             noteMap,
@@ -45,6 +73,13 @@ module.exports = ({
         y: height * flyIn.startingPoint.y
     }
     const getStartPointOffsetX = oscillate(fps, flyIn.startingPoint)
+
+    const getPadLocation = (midiNoteNumber) => {
+        const padIndex = padAssignments[midiNoteNumber]
+        return padIndex >= 0
+            ? padLocations[padIndex]
+            : null
+    }
 
     const drawPads = (ctx, { playingNotes }) => {
         const padColors = playingNotes.reduce((result, { sourceNote: { midiNoteNumber, color } }) => set(
@@ -152,7 +187,8 @@ module.exports = ({
     const flyInPathShapes = { linear, bezierCurve }
     const getFlyingNoteRectangle = flyInPathShapes[flyIn.shape || 'linear']()
 
-    const particles = []
+    const particleFactory = (particleFactories[particleType] || noop)(fps, particleLifetime, getPadLocation)
+    const particleSet = createParticleSet(particleFactory, config)
 
     return ({
         prepareNotesForLayout: (notes) => {
@@ -225,33 +261,7 @@ module.exports = ({
             })
 
             // particles
-            const { newParticles } = frame
-            particles.push(...newParticles)
-            for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
-                const particle = particles[particleIndex]
-                const { note: { midiNoteNumber, color: { fillStyle } }, origin: particleOrigin, progress, direction } = particle
-                const padIndex = padAssignments[midiNoteNumber]
-                if (padIndex >= 0) {
-                    const destinationPad = padLocations[padIndex]
-                    const origin = {
-                        x: destinationPad.x + particleOrigin * destinationPad.width,
-                        y: destinationPad.y
-                    }
-                    const angle = direction * Math.PI // in radians
-                    const particleCoords = {
-                        x: origin.x + Math.cos(angle) * progress * 100,
-                        y: origin.y - Math.sin(angle) * progress * 100
-                    }
-                    const [r, g, b] = rgba(fillStyle)
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.max(0, 1 - progress * progress)})`
-                    ctx.fillRect(particleCoords.x, particleCoords.y, 1, 1)
-                }
-                particle.advanceFrame()
-                if (particle.progress > 1) {
-                    particles.splice(particleIndex, 1)
-                    particleIndex--
-                }
-            }
+            particleSet.drawFrame(frameIndex, ctx, frame.playingNotes)
         }
     })
 }

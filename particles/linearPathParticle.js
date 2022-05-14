@@ -4,14 +4,14 @@ const rgba = require('color-rgba')
 const round2 = require("../round2")
 
 class LinearPathParticle extends BaseParticle {
-    constructor (progressIncrementPerFrame, color, origin, distanceToTravel) {
-        super(progressIncrementPerFrame)
+    constructor (fps, particleLifetime, color, origin, distanceToTravel) {
+        super(fps, particleLifetime)
         assign(this, { color, origin, distanceToTravel })
         const angle = Math.random() * Math.PI
         this.x = origin.x
         this.y = origin.y
-        this.xDelta = Math.cos(angle) * distanceToTravel * progressIncrementPerFrame
-        this.yDelta = -Math.sin(angle) * distanceToTravel * progressIncrementPerFrame
+        this.xDelta = Math.cos(angle) * distanceToTravel * this.progressIncrementPerFrame
+        this.yDelta = -Math.sin(angle) * distanceToTravel * this.progressIncrementPerFrame
     }
 
     draw(ctx) {

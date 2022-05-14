@@ -1,12 +1,11 @@
-const { keyBy, reverse, chain, noop } = require("lodash")
+const { keyBy, reverse, noop } = require("lodash")
 const rgba = require('color-rgba')
 const { calculateBezierCurvePoint, oscillate } = require("./utils")
 const LinearPathParticle = require("../particles/linearPathParticle")
 const BubbleParticle = require("../particles/bubbleParticle")
 const RippleParticle = require("../particles/rippleParticle")
-const { Image } = require("canvas")
-const fs = require('fs')
 const { default: SvgPath } = require('svg-path-to-canvas')
+const { create: createParticleSet } = require("../particles/particleSet")
 
 const whiteKeyMidiNoteNumbers = [
     21, // A0
@@ -426,60 +425,71 @@ const flyingNoteDrawers = {
 }
 
 const particleFactories = {
-    linearPath: (progressIncrementPerFrame, flyInHeight) => ({
-        createParticle: (notePosition, color) => new LinearPathParticle(
-            progressIncrementPerFrame,
-            color,
-            {
-                x: notePosition.xOffset + Math.random() * notePosition.width,
-                y: flyInHeight
-            },
-            200
-        )
+    linearPath: (fps, particleLifetime, flyInHeight, { getFlyingNotePosition }) => ({
+        createParticle: (midiNoteNumber, color) => {
+            const notePosition = getFlyingNotePosition(midiNoteNumber)
+            return new LinearPathParticle(
+                fps,
+                particleLifetime,
+                color,
+                {
+                    x: notePosition.xOffset + Math.random() * notePosition.width,
+                    y: flyInHeight
+                },
+                200
+            )
+        }
     }),
-    bubble: (progressIncrementPerFrame, flyInHeight) => ({
-        createParticle: (notePosition, color) => new BubbleParticle(
-            progressIncrementPerFrame,
-            color,
-            {
-                x: notePosition.xOffset + Math.random() * notePosition.width,
-                y: flyInHeight - 1
-            },
-            flyInHeight,
-            notePosition.width * 0.25
-        )
+    bubble: (fps, particleLifetime, flyInHeight, { getFlyingNotePosition }) => ({
+        createParticle: (midiNoteNumber, color) => {
+            const notePosition = getFlyingNotePosition(midiNoteNumber)
+            return new BubbleParticle(
+                fps,
+                particleLifetime,
+                color,
+                {
+                    x: notePosition.xOffset + Math.random() * notePosition.width,
+                    y: flyInHeight - 1
+                },
+                flyInHeight,
+                notePosition.width * 0.25
+            )
+        }
     }),
-    ripple: (progressIncrementPerFrame, flyInHeight) => ({
-        createParticle: (notePosition, color) => new RippleParticle(
-            progressIncrementPerFrame,
-            color,
-            {
-                x: notePosition.xOffset + 0.5 * notePosition.width,
-                y: flyInHeight - 1
-            },
-            flyInHeight
-        )
+    ripple: (fps, particleLifetime, flyInHeight, { getFlyingNotePosition }) => ({
+        createParticle: (midiNoteNumber, color) => {
+            const notePosition = getFlyingNotePosition(midiNoteNumber)
+            return new RippleParticle(
+                fps,
+                particleLifetime,
+                color,
+                {
+                    x: notePosition.xOffset + 0.5 * notePosition.width,
+                    y: flyInHeight - 1
+                },
+                flyInHeight
+            )
+        }
     })
 }
 
-module.exports = ({
-    keyboardHeightProportion = 0.1,
-    flyIn: flyInConfig,
-    fps,
-    impactSize = 60,
-    width = 480,
-    height = 360,
-    noteApproachTime,
-    particles: {
-        type: particleType = 'linearPath',
-        perFrame: particlesPerFrame = 10,
-        oneEveryNMilliseconds: oneParticleEveryNMilliseconds = null,
-        lifetime: particleLifetime = 2000,
-    } = {}
-}) => {
+module.exports = (config) => {
+    const {
+        keyboardHeightProportion = 0.1,
+        flyIn: flyInConfig,
+        fps,
+        impactSize = 60,
+        width = 480,
+        height = 360,
+        noteApproachTime,
+        particles: {
+            type: particleType = 'linearPath',
+            lifetime: particleLifetime = 2000,
+        } = {}
+    } = config
+
     const keyboardHeight = height * (keyboardHeightProportion)
     const flyInHeight = height - keyboardHeight
-    const msPerFrame = 1000 / fps
 
     const keyboard = createKeyboard({
         keyboardHeight,
@@ -496,23 +506,8 @@ module.exports = ({
         noteApproachTime
     })
 
-    const particles = []
-    const numFramesInParticleLifetime = Math.round(particleLifetime / 1000 * fps)
-    const particleProgressIncrementPerFrame = 1 / numFramesInParticleLifetime
-    const particleFactory = (particleFactories[particleType] || noop)(particleProgressIncrementPerFrame, flyInHeight)
-    const numParticlesThisFrame = oneParticleEveryNMilliseconds
-        ? (frameIndex, note) => {
-            const frameTime = frameIndex * msPerFrame
-            const noteTime = note.start + noteApproachTime
-            const noteOffsetFromFrameTime = noteTime - frameTime
-            const noteOffsetFromPreviousFrameTime = noteOffsetFromFrameTime + msPerFrame
-            const thisFrameParticle = Math.round(noteOffsetFromFrameTime / oneParticleEveryNMilliseconds)
-            const prevFrameParticle = Math.round(noteOffsetFromPreviousFrameTime / oneParticleEveryNMilliseconds)
-            return noteOffsetFromFrameTime >= 0
-                ? 0
-                : thisFrameParticle !== prevFrameParticle ? 1 : 0
-        }
-        : () => particlesPerFrame
+    const particleFactory = (particleFactories[particleType] || noop)(fps, particleLifetime, flyInHeight, keyboard)
+    const particleSet = createParticleSet(particleFactory, config)
 
     const drawFrame = (ctx, frame, frameIndex) => {
         // flying notes
@@ -571,27 +566,7 @@ module.exports = ({
         keyboard.draw(ctx, frame)
 
         // particles
-        if (particleFactory) {
-            const newParticles = chain([...frame.playingNotes, ...frame.sustainingNotes])
-                .map('sourceNote')
-                .uniqBy(({ midiNoteNumber, color: { fillStyle } }) => `${midiNoteNumber}_${fillStyle}`)
-                .flatMap(note => Array(numParticlesThisFrame(frameIndex, note)).fill().map(() => ({ note })))
-                .value()
-            particles.push(...newParticles.map(particle => {
-                const { note: { midiNoteNumber, color } } = particle
-                const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
-                return particleFactory.createParticle(notePosition, color)
-            }))
-            for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
-                const particle = particles[particleIndex]
-                particle.draw(ctx)
-                particle.advanceFrame()
-                if (particle.progress > 1) {
-                    particles.splice(particleIndex, 1)
-                    particleIndex--
-                }
-            }
-        }
+        particleSet.drawFrame(frameIndex, ctx, [...frame.playingNotes, ...frame.sustainingNotes])
     }
 
     return { drawFrame }

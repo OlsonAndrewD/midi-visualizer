@@ -5,13 +5,13 @@ const round2 = require("../round2")
 const twoPi = 2 * Math.PI
 
 class BubbleParticle extends BaseParticle {
-    constructor (progressIncrementPerFrame, color, origin, distanceToTravel, waveWidth) {
-        super(progressIncrementPerFrame)
+    constructor (fps, particleLifetime, color, origin, distanceToTravel, waveWidth) {
+        super(fps, particleLifetime)
         distanceToTravel *= 1 + (Math.random() * 0.2 - 0.1)
         assign(this, { color, origin, distanceToTravel, waveWidth })
         this.xMultiplier = Math.random() > 0.5 ? 1 : -1
         this.sineOffset = Math.random() * Math.PI
-        this.yOffset = Math.random() * this.distanceToTravel * progressIncrementPerFrame
+        this.yOffset = Math.random() * this.distanceToTravel * this.progressIncrementPerFrame
         this.numPeriods = 2 + Math.random() * 2
         this.widener = Math.random() * 0.2
     }

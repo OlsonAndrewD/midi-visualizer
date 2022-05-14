@@ -4,14 +4,14 @@ const round2 = require("../round2")
 const BaseParticle = require("./baseParticle")
 
 class RippleParticle extends BaseParticle {
-    constructor (progressIncrementPerFrame, color, origin, distanceToTravel) {
-        super(progressIncrementPerFrame)
+    constructor (fps, particleLifetime, color, origin, distanceToTravel) {
+        super(fps, particleLifetime)
         assign(this, {
             color,
             origin,
             distanceToTravel
         })
-        this.progressOffset = Math.random() * progressIncrementPerFrame
+        this.progressOffset = Math.random() * this.progressIncrementPerFrame
     }
 
     draw(ctx) {

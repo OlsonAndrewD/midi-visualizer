@@ -1,8 +1,9 @@
 class BaseParticle {
-    constructor (progressIncrementPerFrame) {
+    constructor (fps, particleLifetime) {
         this.frameNumber = 0
         this.progress = 0
-        this.progressIncrementPerFrame = progressIncrementPerFrame
+        const numFramesInParticleLifetime = Math.round(particleLifetime / 1000 * fps)
+        this.progressIncrementPerFrame = 1 / numFramesInParticleLifetime
     }
 
     advanceFrame() {
