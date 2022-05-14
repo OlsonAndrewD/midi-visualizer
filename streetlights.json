@@ -1,0 +1,34 @@
+{
+    "fps": 60,
+    "noteApproachTime": 1000,
+    "noteImpactTime": 500,
+    "impactSize": 80,
+    "midiFileName": "test-data/Streetlights.mid",
+    "width": 1280,
+    "height": 720,
+    "backgroundColor": "black",
+    "flyIn": {
+        "type": "liquidDrops"
+    },
+    "visualizer": {
+        "type": "keyboard",
+        "keyboardHeightProportion": 0.15
+    },
+    "colorizer": {
+        "type": "gradualCycle",
+        "colors": [
+            "#00ffff",
+            "#2c5dff",
+            "#bd4aff",
+            "#ff82df",
+            "#ffa3a3",
+            "#dafd73",
+            "#00ffff"
+        ]
+    },
+    "particles": {
+        "type": "ripple",
+        "oneEveryNMilliseconds": 500,
+        "lifetime": 3000
+    }
+}
