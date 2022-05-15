@@ -28,6 +28,7 @@ module.exports = (config) => {
     const {
         noteMap,
         padHeight,
+        padY,
         padOrder,
         flyIn,
         fps,
@@ -60,7 +61,6 @@ module.exports = (config) => {
     const spacing = 10
     const numberOfPads = padOrder.length
     const padWidth = (width - spacing * (numberOfPads + 1)) / numberOfPads
-    const padY = height - spacing - padHeight
     const padLocations = Array(numberOfPads).fill(0).map((_, index) => ({
         x: (index + 1) * spacing + index * padWidth,
         y: padY,

@@ -2,15 +2,15 @@
     "fps": 30,
     "noteApproachTime": 1000,
     "midiFileName": "test-data/drums.mid",
-    "width": 960,
-    "height": 360,
+    "width": 1280,
+    "height": 720,
     "backgroundColor": "black",
     "flyIn": {
         "type": "3d",
         "shape": "bezierCurve",
         "startingPoint": {
             "x": 0.5,
-            "y": 0,
+            "y": 0.4,
             "oscillation": {
                 "cycleLengthInSeconds": 20,
                 "width": 0.8
@@ -55,6 +55,7 @@
     "visualizer": {
         "type": "drumPads",
         "padHeight": 200,
+        "padY": 0,
         "padOrder": [
             ["Crash Left"],
             [
