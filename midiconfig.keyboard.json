@@ -3,12 +3,12 @@
     "noteApproachTime": 1000,
     "noteImpactTime": 500,
     "impactSize": 80,
-    "midiFileName": "test-data/Streetlights.mid",
+    "midiFileName": "test-data/test.mid",
     "width": 640,
     "height": 360,
     "backgroundColor": "black",
     "flyIn": {
-        "type": "liquidDrops"
+        "type": "topDown"
     },
     "visualizer": {
         "type": "keyboard",
@@ -27,8 +27,6 @@
         ]
     },
     "particles": {
-        "type": "ripple",
-        "oneEveryNMilliseconds": 500,
-        "lifetime": 3000
+        "type": "linearPath"
     }
 }
