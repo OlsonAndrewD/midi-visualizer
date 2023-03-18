@@ -38,8 +38,16 @@ module.exports = (config) => {
         particles: {
             type: particleType = 'linearPath',
             lifetime: particleLifetime = 2000,
-        }
+        },
+        tracks
     } = config
+
+    const myTracks = tracks.reduce((result, track, index) => {
+        if (track.visualizer === 'drumPads') {
+            result[index] = true
+        }
+        return result
+    }, {})
 
     const getMidiNoteNumber = (() => {
         const lookup = reduce(
@@ -81,7 +89,7 @@ module.exports = (config) => {
             : null
     }
 
-    const drawPads = (ctx, { playingNotes }) => {
+    const drawPads = (ctx, playingNotes) => {
         const padColors = playingNotes.reduce((result, { sourceNote: { midiNoteNumber, color } }) => set(
             result,
             padAssignments[midiNoteNumber],
@@ -199,10 +207,15 @@ module.exports = (config) => {
             ctx.strokeStyle = 'black'
             ctx.lineWidth = 1
 
+            const notes = {
+                flying: frame.flyingNotes.filter(n => myTracks[n.sourceNote.track]),
+                playing: frame.playingNotes.filter(n => myTracks[n.sourceNote.track]),
+                impacts: frame.noteImpacts.filter(n => myTracks[n.sourceNote.track]),
+            }
+
             // flying notes
-            const { flyingNotes } = frame
             const reversed = reverse([
-                ...flyingNotes
+                ...notes.flying
             ])
             reversed.forEach(({ sourceNote: { midiNoteNumber, color: { fillStyle } }, startProgress }) => {
                 const padIndex = padAssignments[midiNoteNumber]
@@ -231,12 +244,11 @@ module.exports = (config) => {
             })
 
             // pads and playing notes
-            drawPads(ctx, frame)
+            drawPads(ctx, notes.playing)
 
             // note impact shockwaves
             ctx.lineWidth = 2
-            const { noteImpacts } = frame
-            noteImpacts.forEach((noteImpact) => {
+            notes.impacts.forEach((noteImpact) => {
                 const { sourceNote: { midiNoteNumber, color: { fillStyle } }, progress } = noteImpact
                 const padIndex = padAssignments[midiNoteNumber]
                 if (padIndex >= 0) {
@@ -261,7 +273,7 @@ module.exports = (config) => {
             })
 
             // particles
-            particleSet.drawFrame(frameIndex, ctx, frame.playingNotes)
+            particleSet.drawFrame(frameIndex, ctx, notes.playing)
         }
     })
 }

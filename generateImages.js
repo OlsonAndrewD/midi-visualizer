@@ -7,7 +7,7 @@ function initFrame(ctx, width, height, backgroundColor) {
     ctx.fillRect(0, 0, width, height)
 }
 
-module.exports = (drawFrame, frames, config) => {
+module.exports = (visualizers, frames, config) => {
     const { backgroundColor, width = 480, height = 360 } = config
 
     /** @type {HTMLCanvasElement} */
@@ -24,7 +24,7 @@ module.exports = (drawFrame, frames, config) => {
     while (frames.length) {
         const frame = frames.shift()
         initFrame(ctx, width, height, backgroundColor)
-        drawFrame(ctx, frame, i)
+        visualizers.forEach(v => v.drawFrame(ctx, frame, i))
         var b64 = canvas.toDataURL("image/png").split("data:image/png;base64,")[1]
         writeFileSync(`./frames/frame${('' + i).padStart(7, '0')}.png`, b64, "base64")
         var progressWidth = process.stdout.columns

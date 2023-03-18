@@ -3,11 +3,11 @@ readline.emitKeypressEvents(process.stdin)
 const parseMidi = require('./parseMidi')
 const layoutFrames = require('./layoutFrames')
 const generateImages = require('./generateImages')
-const createVideo = require('./createVideo')
 const {existsSync, readFileSync, readdirSync, lstatSync} = require("fs")
-const { orderBy, omit } = require('lodash')
+const { orderBy, chain, flow, curryRight, memoize, identity, mapValues } = require('lodash')
 const terminal = require('terminal-kit').terminal
 const path = require("path")
+const configReader = require('./configReader')
 
 terminal.windowTitle("MIDI Visualizer")
 
@@ -53,9 +53,27 @@ function showFileExplorer(startDir, fileType) {
 class Visualizer {
     constructor(config) {
         this.start = () => {
-            const visualizer = require(`./visualizers/${config.visualizer.type}`)({
-                ...omit(config, "visualizer"),
-                ...config.visualizer
+            const trackVisualizers = {}
+            const getTrackVisualizer = memoize(trackIndex => {
+                const visualizerConfig = configReader(config).getObject('visualizer', trackIndex)
+                if (visualizerConfig) {
+                    if (!trackVisualizers[visualizerConfig.type]) {
+                        trackVisualizers[visualizerConfig.type] = require(`./visualizers/${visualizerConfig.type}`)({
+                            ...config,
+                            ...visualizerConfig
+                        })
+                    }
+                    trackVisualizers[visualizerConfig.type].registerTrackIndex(trackIndex)
+                    return trackVisualizers[visualizerConfig.type]
+                }
+            })
+
+            const visualizers = mapValues({ ...config.visualizers }, (visualizerConfig) => {
+                const { type } = visualizerConfig
+                return require(`./visualizers/${type}`)({
+                    ...config,
+                    ...visualizerConfig
+                })
             })
             
             terminal('Parsing MIDI file...\n')
@@ -71,9 +89,15 @@ class Visualizer {
             terminal.up(1)
             terminal('Parsing MIDI file... ').bgBlack.brightGreen("Done\n")
             
-            song.notes = orderBy(song.notes, ['start', 'midiNoteNumber'])
-            
-            visualizer.prepareNotesForLayout && visualizer.prepareNotesForLayout(song.notes)
+            song.notes = chain(song.notes)
+                .groupBy('track')
+                .mapValues((notes, track) => flow([
+                    curryRight(orderBy, 2)(['start', 'midiNoteNumber']),
+                    visualizers[config.tracks[track].visualizer].prepareNotesForLayout || identity,
+                ])(notes))
+                .values()
+                .flatten()
+                .value()
             
             terminal(`Laying out and coloring frames for ${song.notes.length} notes...\n`)
             var frames
@@ -92,7 +116,7 @@ class Visualizer {
             terminal(`Generating ${numberOfFrames} frame images...\n`)
             var imageDirectory
             try {
-                imageDirectory = generateImages(visualizer.drawFrame, frames, config)
+                imageDirectory = generateImages(Object.values(visualizers), frames, config)
             } catch (err) {
                 terminal.brightRed.bgBlack("Error: Couldn't draw frames.\n")
                 console.error(err)

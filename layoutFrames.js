@@ -1,6 +1,7 @@
-const { last, sortBy, chain, get } = require('lodash')
+const { last, sortBy, chain, get, memoize } = require('lodash')
 const path = require("path")
 const round2 = require('./round2')
+const configReader = require('./configReader')
 
 module.exports = ({ config, song }) => {
     const {
@@ -8,7 +9,6 @@ module.exports = ({ config, song }) => {
         fps,
         noteApproachTime = 1000,
         noteImpactTime = 500,
-        colorizer,
         noteMap,
     } = config
     const { notes = [], pitchBends = [] } = song
@@ -50,15 +50,18 @@ module.exports = ({ config, song }) => {
         )
         .value()
 
-    const colorize = colorizer
-        ? require(`./${path.join("colorizers", colorizer.type)}`)({ ...colorizer, noteMap, lastNote })
-        : (() => {
-            const white = { fillStyle: 'white' }
-            return () => white
-        })()
+    const getTrackColorizer = memoize(trackIndex => {
+        const colorizer = configReader(config).getObject('colorizer', trackIndex)
+        return colorizer
+            ? require(`./${path.join("colorizers", colorizer.type)}`)({ ...colorizer, noteMap, lastNote })
+            : (() => {
+                const white = { fillStyle: 'white' }
+                return () => white
+            })()
+    })
 
     notes.forEach((note) => {
-        note.color = colorize(note)
+        note.color = getTrackColorizer(note.track)(note)
         const noteStartFrameOffset = frameOffsetPercent(note.start)
         const noteEndFrameOffset = frameOffsetPercent(note.end)
         const noteHeight = (note.end - note.start) / noteApproachTime

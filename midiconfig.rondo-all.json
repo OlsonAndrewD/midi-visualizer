@@ -2,7 +2,7 @@
     "midiFileName": "test-data/pitched-instr.mid",
     "width": 960,
     "height": 360,
-    "fps": 30,
+    "fps": 10,
     "backgroundColor": "black",
     "noteApproachTime": 2000,
     "noteImpactTime": 500,
@@ -18,13 +18,37 @@
             }
         }
     },
-    "visualizer": {
+    "visualizers": {
         "keyboard": {
             "type": "keyboard",
             "keyboardHeightProportion": 0.2,
             "impactSize": 60,
             "particles": {
                 "perFrame": 10
+            }
+        },
+        "drumPads": {
+            "type": "drumPads",
+            "padY": 0,
+            "padHeight": 150,
+            "padOrder": [
+                ["Crash Left"],
+                [
+                    "HH Closed Tight",
+                    "HH Closed",
+                    "HH Open 1",
+                    "HH Open 2",
+                    "HH Open 3",
+                    "HH Open ?",
+                    "HH Pedal"
+                ],
+                ["Kick 1", "Kick 2"],
+                ["Snare"],
+                ["Crash Right"]
+            ],
+            "impactSize": 75,
+            "particles": {
+                "perFrame": 50
             }
         }
     },
@@ -35,7 +59,7 @@
                 {
                     "name": "sustain",
                     "midiNoteNumber": 12,
-                    "color": null
+                    "color": "cyan"
                 },
                 {
                     "name": "tapping",
@@ -50,7 +74,7 @@
                 {
                     "name": "sustain",
                     "midiNoteNumber": 12,
-                    "color": null
+                    "color": "green"
                 },
                 {
                     "name": "tapping",
@@ -72,25 +96,21 @@
         {
             "name": "Guitar 1",
             "visualizer": "keyboard",
-            "color": "cyan",
             "colorizer": "lead-guitar-1"
         },
         {
             "name": "Guitar 1 Re-recorded",
             "visualizer": "keyboard",
-            "color": "cyan",
             "colorizer": "lead-guitar-1"
         },
         {
             "name": "Guitar 2",
             "visualizer": "keyboard",
-            "color": "green",
             "colorizer": "lead-guitar-2"
         },
         {
             "name": "Guitar 2 Re-recorded",
             "visualizer": "keyboard",
-            "color": "green",
             "colorizer": "lead-guitar-2"
         },
         {
@@ -99,6 +119,7 @@
             "color": "#c00000",
             "colorizer": {
                 "type": "keyswitches",
+                "color": "#c00000",
                 "keyswitches": [
                     {
                         "name": "sustain",
@@ -167,30 +188,7 @@
                     "HH Pedal": "purple"
                 }
             },
-            "visualizer": {
-                "type": "drumPads",
-                "padY": 0,
-                "padHeight": 200,
-                "padOrder": [
-                    ["Crash Left"],
-                    [
-                        "HH Closed Tight",
-                        "HH Closed",
-                        "HH Open 1",
-                        "HH Open 2",
-                        "HH Open 3",
-                        "HH Open ?",
-                        "HH Pedal"
-                    ],
-                    ["Kick 1", "Kick 2"],
-                    ["Snare"],
-                    ["Crash Right"]
-                ],
-                "impactSize": 75,
-                "particles": {
-                    "perFrame": 50
-                }
-            }
+            "visualizer": "drumPads"
         }
     ]
 }
