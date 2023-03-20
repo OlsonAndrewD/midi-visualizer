@@ -201,6 +201,7 @@ module.exports = (config) => {
     return ({
         prepareNotesForLayout: (notes) => {
             notes.forEach(note => note.end = note.start + 100)
+            return notes
         },
         drawFrame: (ctx, frame, frameIndex) => {
             ctx.fillStyle = 'gray'

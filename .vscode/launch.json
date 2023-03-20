@@ -12,7 +12,7 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/index.js",
-            "args": ["midiconfig.rondo-all.json"]
+            "args": ["midiconfig.rondo-drums.json"]
         }
     ]
 }
