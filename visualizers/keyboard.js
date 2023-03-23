@@ -424,6 +424,8 @@ const flyingNoteDrawers = {
     'liquidDrops': drawLiquidNote,
 }
 
+const angle = 0.5 * Math.PI
+
 const particleFactories = {
     linearPath: (fps, particleLifetime, flyInHeight, { getFlyingNotePosition }) => ({
         createParticle: (midiNoteNumber, color) => {
@@ -439,6 +441,7 @@ const particleFactories = {
                     x: notePosition.xOffset + Math.random() * notePosition.width,
                     y: flyInHeight
                 },
+                angle,
                 200
             )
         }
@@ -564,7 +567,7 @@ module.exports = (config) => {
             const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
             if (notePosition) {
                 const [r, g, b] = rgba(color.fillStyle)
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.75})`
 
                 const easingProgress = 1 // -Math.pow(2, -10 * progress) + 1
                 const impactCircle = {

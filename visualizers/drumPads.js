@@ -4,6 +4,8 @@ const { calculateBezierCurvePoint, oscillate } = require("./utils")
 const { create: createParticleSet } = require("../particles/particleSet")
 const LinearPathParticle = require("../particles/linearPathParticle")
 
+const angle = 1.5 * Math.PI
+
 const particleFactories = {
     linearPath: (fps, particleLifetime, getPadLocation) => ({
         createParticle: (midiNoteNumber, color) => {
@@ -15,8 +17,9 @@ const particleFactories = {
                     color,
                     {
                         x: padLocation.x + Math.random() * padLocation.width,
-                        y: padLocation.y - 1
+                        y: padLocation.y + padLocation.height + 1,
                     },
+                    angle,
                     200
                 )
                 : null
@@ -254,15 +257,15 @@ module.exports = (config) => {
                 const padIndex = padAssignments[midiNoteNumber]
                 if (padIndex >= 0) {
                     const [r, g, b] = rgba(fillStyle)
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.75})`
 
                     const destinationPad = padLocations[padIndex]
                     const easingProgress = -Math.pow(2, -10 * progress) + 1
                     const impactRectangle = {
-                        x: destinationPad.x - 0.2 * progress * impactSize * easingProgress,
+                        x: destinationPad.x - progress * impactSize * easingProgress,
                         y: destinationPad.y - progress * impactSize * easingProgress,
-                        width: destinationPad.width + 0.4 * impactSize * progress * easingProgress,
-                        height: destinationPad.height + impactSize * progress * easingProgress,
+                        width: destinationPad.width + 2 * impactSize * progress * easingProgress,
+                        height: destinationPad.height + 2 * impactSize * progress * easingProgress,
                     }
                     ctx.fillRect(
                         impactRectangle.x,
