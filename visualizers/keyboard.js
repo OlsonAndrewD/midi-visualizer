@@ -32,7 +32,7 @@ const createKeyboard = (({ keyboardHeight, height, width }) => {
 
     const xOctaveZero = 2 * whiteKeyEdgeWidth - octaveWidth
 
-    const draw = (ctx, { playingNotes, sustainingNotes }) => {
+    const draw = (ctx, playingNotes, sustainingNotes) => {
         const playingNoteLookup = keyBy(playingNotes, 'sourceNote.midiNoteNumber')
         const sustainingNoteLookup = keyBy(sustainingNotes, 'sourceNote.midiNoteNumber')
 
@@ -424,10 +424,15 @@ const flyingNoteDrawers = {
     'liquidDrops': drawLiquidNote,
 }
 
+const angle = 0.5 * Math.PI
+
 const particleFactories = {
     linearPath: (fps, particleLifetime, flyInHeight, { getFlyingNotePosition }) => ({
         createParticle: (midiNoteNumber, color) => {
             const notePosition = getFlyingNotePosition(midiNoteNumber)
+            if (!notePosition) {
+                return null
+            }
             return new LinearPathParticle(
                 fps,
                 particleLifetime,
@@ -436,6 +441,7 @@ const particleFactories = {
                     x: notePosition.xOffset + Math.random() * notePosition.width,
                     y: flyInHeight
                 },
+                angle,
                 200
             )
         }
@@ -443,6 +449,9 @@ const particleFactories = {
     bubble: (fps, particleLifetime, flyInHeight, { getFlyingNotePosition }) => ({
         createParticle: (midiNoteNumber, color) => {
             const notePosition = getFlyingNotePosition(midiNoteNumber)
+            if (!notePosition) {
+                return null
+            }
             return new BubbleParticle(
                 fps,
                 particleLifetime,
@@ -459,6 +468,9 @@ const particleFactories = {
     ripple: (fps, particleLifetime, flyInHeight, { getFlyingNotePosition }) => ({
         createParticle: (midiNoteNumber, color) => {
             const notePosition = getFlyingNotePosition(midiNoteNumber)
+            if (!notePosition) {
+                return null
+            }
             return new RippleParticle(
                 fps,
                 particleLifetime,
@@ -485,8 +497,16 @@ module.exports = (config) => {
         particles: {
             type: particleType = 'linearPath',
             lifetime: particleLifetime = 2000,
-        } = {}
+        } = {},
+        tracks
     } = config
+
+    const myTracks = tracks.reduce((result, track, index) => {
+        if (track.visualizer === 'keyboard') {
+            result[index] = true
+        }
+        return result
+    }, {})
 
     const keyboardHeight = height * (keyboardHeightProportion)
     const flyInHeight = height - keyboardHeight
@@ -510,12 +530,18 @@ module.exports = (config) => {
     const particleSet = createParticleSet(particleFactory, config)
 
     const drawFrame = (ctx, frame, frameIndex) => {
+        const notes = {
+            flying: frame.flyingNotes.filter(n => myTracks[n.sourceNote.track]),
+            playing: frame.playingNotes.filter(n => myTracks[n.sourceNote.track]),
+            sustaining: frame.sustainingNotes.filter(n => myTracks[n.sourceNote.track]),
+            impacts: frame.noteImpacts.filter(n => myTracks[n.sourceNote.track]),
+        }
+
         // flying notes
-        const { flyingNotes } = frame
         const reversed = reverse([
-            ...flyingNotes
+            ...notes.flying
         ])
-        reversed.forEach(({
+        reversed.filter(n => myTracks[n.sourceNote.track]).forEach(({
             sourceNote: {
                 color: { fillStyle },
                 midiNoteNumber
@@ -537,12 +563,11 @@ module.exports = (config) => {
 
         // note impact shockwaves
         ctx.lineWidth = 2
-        const { noteImpacts } = frame
-        noteImpacts.forEach(({ sourceNote: { midiNoteNumber, color }, progress }) => {
+        notes.impacts.forEach(({ sourceNote: { midiNoteNumber, color }, progress }) => {
             const notePosition = keyboard.getFlyingNotePosition(midiNoteNumber)
             if (notePosition) {
                 const [r, g, b] = rgba(color.fillStyle)
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.75})`
 
                 const easingProgress = 1 // -Math.pow(2, -10 * progress) + 1
                 const impactCircle = {
@@ -563,10 +588,10 @@ module.exports = (config) => {
         })
 
         // keyboard and playing/sustained notes
-        keyboard.draw(ctx, frame)
+        keyboard.draw(ctx, notes.playing, notes.sustaining)
 
         // particles
-        particleSet.drawFrame(frameIndex, ctx, [...frame.playingNotes, ...frame.sustainingNotes])
+        particleSet.drawFrame(frameIndex, ctx, [...notes.playing, ...notes.sustaining])
     }
 
     return { drawFrame }

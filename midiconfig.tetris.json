@@ -1,0 +1,112 @@
+{
+    "midiFileName": "test-data/Tetris.mid",
+    "width": 480,
+    "height": 360,
+    "fps": 30,
+    "backgroundColor": "black",
+    "noteApproachTime": 2000,
+    "noteImpactTime": 200,
+    "flyIn": {
+        "type": "3d",
+        "shape": "bezierCurve",
+        "startingPoint": {
+            "x": 0.5,
+            "y": 0.5,
+            "oscillation": {
+                "cycleLengthInSeconds": 20,
+                "width": 0.8
+            }
+        }
+    },
+    "visualizers": {
+        "keyboard": {
+            "type": "keyboard",
+            "keyboardHeightProportion": 0.1,
+            "impactSize": 30,
+            "particles": {
+                "perFrame": 10
+            }
+        },
+        "drumPads": {
+            "type": "drumPads",
+            "padY": 0,
+            "padHeight": 100,
+            "padOrder": [[
+                ["HH"],
+                ["Kick"],
+                ["Snare"]
+            ]],
+            "impactSize": 25,
+            "particles": {
+                "perFrame": 50
+            }
+        }
+    },
+    "colorizer": {
+        "cycle": {
+            "type": "gradualCycle"
+        },
+        "lead-guitar-1": {
+            "type": "keyswitches",
+            "keyswitches": [
+                {
+                    "name": "sustain",
+                    "midiNoteNumber": 12,
+                    "color": "cyan"
+                },
+                {
+                    "name": "tapping",
+                    "midiNoteNumber": 17,
+                    "color": "#7FFFD4"
+                }
+            ]
+        },
+        "lead-guitar-2": {
+            "type": "keyswitches",
+            "keyswitches": [
+                {
+                    "name": "sustain",
+                    "midiNoteNumber": 12,
+                    "color": "green"
+                },
+                {
+                    "name": "tapping",
+                    "midiNoteNumber": 17,
+                    "color": "#44FF44"
+                }
+            ]
+        }
+    },
+    "tracks": [
+        {
+            "name": "tempo track has no notes and no config"
+        },
+        {
+            "name": "Synth 1",
+            "visualizer": "keyboard",
+            "colorizer": "cycle"
+        },
+        {
+            "name": "Synth 2",
+            "visualizer": "keyboard",
+            "colorizer": "cycle"
+        },
+        {
+            "name": "drums",
+            "noteMap": {
+                "36": "Kick",
+                "108": "Snare",
+                "127": "HH"
+            },
+            "colorizer": {
+                "type": "byNote",
+                "noteColors": {
+                    "Kick": "cyan",
+                    "Snare": "yellow",
+                    "HH": "#00ff00"
+                }
+            },
+            "visualizer": "drumPads"
+        }
+    ]
+}

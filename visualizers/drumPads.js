@@ -4,6 +4,8 @@ const { calculateBezierCurvePoint, oscillate } = require("./utils")
 const { create: createParticleSet } = require("../particles/particleSet")
 const LinearPathParticle = require("../particles/linearPathParticle")
 
+const angle = 1.5 * Math.PI
+
 const particleFactories = {
     linearPath: (fps, particleLifetime, getPadLocation) => ({
         createParticle: (midiNoteNumber, color) => {
@@ -15,8 +17,9 @@ const particleFactories = {
                     color,
                     {
                         x: padLocation.x + Math.random() * padLocation.width,
-                        y: padLocation.y - 1
+                        y: padLocation.y + padLocation.height + 1,
                     },
+                    angle,
                     200
                 )
                 : null
@@ -26,7 +29,6 @@ const particleFactories = {
 
 module.exports = (config) => {
     const {
-        noteMap,
         padHeight,
         padY,
         padOrder,
@@ -38,8 +40,21 @@ module.exports = (config) => {
         particles: {
             type: particleType = 'linearPath',
             lifetime: particleLifetime = 2000,
-        }
+        },
+        tracks
     } = config
+
+    const noteMap = tracks.reduce(
+        (prev, next) => ({ ...prev, ...next.noteMap || {} }),
+        {}
+    )
+
+    const myTracks = tracks.reduce((result, track, index) => {
+        if (track.visualizer === 'drumPads') {
+            result[index] = true
+        }
+        return result
+    }, {})
 
     const getMidiNoteNumber = (() => {
         const lookup = reduce(
@@ -51,23 +66,37 @@ module.exports = (config) => {
         )
         return noteName => lookup[noteName]
     })()
-    const padAssignments = padOrder.reduce((assignments, nextPadAssignments, padIndex) => {
-        nextPadAssignments.forEach(noteName => {
-            assignments[getMidiNoteNumber(noteName)] = padIndex
-        })
-        return assignments
-    }, {})
+    let nextPadIndex = 0
+    const padAssignments = padOrder.reduce(
+        (allPads, nextRow) => ({
+            ...allPads,
+            ...nextRow.reduce(
+                (assignments, nextPadAssignments) => {
+                    nextPadAssignments.forEach(noteName => {
+                        assignments[getMidiNoteNumber(noteName)] = nextPadIndex
+                    })
+                    nextPadIndex += 1
+                    return assignments
+                },
+                {}
+            )
+        }),
+        {}
+    )
 
     const spacing = 10
-    const numberOfPads = padOrder.length
-    const padWidth = (width - spacing * (numberOfPads + 1)) / numberOfPads
-    const padLocations = Array(numberOfPads).fill(0).map((_, index) => ({
-        x: (index + 1) * spacing + index * padWidth,
-        y: padY,
-        height: padHeight,
-        width: padWidth,
-    }))
-    const padAspectRatio = padWidth / padHeight
+    const padLocations = padOrder.reduce(
+        (prevRows, row, rowIndex) => {
+            const padWidth = (width - spacing * (row.length + 1)) / row.length
+            return prevRows.concat(Array(row.length).fill(0).map((_, index) => ({
+                x: (index + 1) * spacing + index * padWidth,
+                y: padY + rowIndex * (padHeight * height + spacing),
+                height: padHeight * height,
+                width: padWidth,
+            })))
+        },
+        []
+    )
     const startingPoint = {
         x: width * flyIn.startingPoint.x,
         y: height * flyIn.startingPoint.y
@@ -81,7 +110,7 @@ module.exports = (config) => {
             : null
     }
 
-    const drawPads = (ctx, { playingNotes }) => {
+    const drawPads = (ctx, playingNotes) => {
         const padColors = playingNotes.reduce((result, { sourceNote: { midiNoteNumber, color } }) => set(
             result,
             padAssignments[midiNoteNumber],
@@ -179,7 +208,7 @@ module.exports = (config) => {
                 x: leftCurvePoint.x,
                 y: leftCurvePoint.y,
                 width,
-                height: width / padAspectRatio
+                height: width / (destinationPad.width / destinationPad.height)
             })
         }
     }
@@ -193,16 +222,22 @@ module.exports = (config) => {
     return ({
         prepareNotesForLayout: (notes) => {
             notes.forEach(note => note.end = note.start + 100)
+            return notes
         },
         drawFrame: (ctx, frame, frameIndex) => {
             ctx.fillStyle = 'gray'
             ctx.strokeStyle = 'black'
             ctx.lineWidth = 1
 
+            const notes = {
+                flying: frame.flyingNotes.filter(n => myTracks[n.sourceNote.track]),
+                playing: frame.playingNotes.filter(n => myTracks[n.sourceNote.track]),
+                impacts: frame.noteImpacts.filter(n => myTracks[n.sourceNote.track]),
+            }
+
             // flying notes
-            const { flyingNotes } = frame
             const reversed = reverse([
-                ...flyingNotes
+                ...notes.flying
             ])
             reversed.forEach(({ sourceNote: { midiNoteNumber, color: { fillStyle } }, startProgress }) => {
                 const padIndex = padAssignments[midiNoteNumber]
@@ -231,25 +266,24 @@ module.exports = (config) => {
             })
 
             // pads and playing notes
-            drawPads(ctx, frame)
+            drawPads(ctx, notes.playing)
 
             // note impact shockwaves
             ctx.lineWidth = 2
-            const { noteImpacts } = frame
-            noteImpacts.forEach((noteImpact) => {
+            notes.impacts.forEach((noteImpact) => {
                 const { sourceNote: { midiNoteNumber, color: { fillStyle } }, progress } = noteImpact
                 const padIndex = padAssignments[midiNoteNumber]
                 if (padIndex >= 0) {
                     const [r, g, b] = rgba(fillStyle)
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.25})`
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(1 - progress) * 0.75})`
 
                     const destinationPad = padLocations[padIndex]
                     const easingProgress = -Math.pow(2, -10 * progress) + 1
                     const impactRectangle = {
-                        x: destinationPad.x - 0.2 * progress * impactSize * easingProgress,
+                        x: destinationPad.x - progress * impactSize * easingProgress,
                         y: destinationPad.y - progress * impactSize * easingProgress,
-                        width: destinationPad.width + 0.4 * impactSize * progress * easingProgress,
-                        height: destinationPad.height + impactSize * progress * easingProgress,
+                        width: destinationPad.width + 2 * impactSize * progress * easingProgress,
+                        height: destinationPad.height + 2 * impactSize * progress * easingProgress,
                     }
                     ctx.fillRect(
                         impactRectangle.x,
@@ -261,7 +295,7 @@ module.exports = (config) => {
             })
 
             // particles
-            particleSet.drawFrame(frameIndex, ctx, frame.playingNotes)
+            particleSet.drawFrame(frameIndex, ctx, notes.playing)
         }
     })
 }

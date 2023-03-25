@@ -1,16 +1,17 @@
 {
-    "fps": 30,
+    "fps": 10,
     "noteApproachTime": 1000,
-    "midiFileName": "test-data/drums.mid",
-    "width": 1280,
-    "height": 720,
+    "noteImpactTime": 200,
+    "midiFileName": "C:\\Users\\olson\\Documents\\Studio One\\Songs\\Rondo Alla Turca\\Rondo Alla Turca drums.mid",
+    "width": 640,
+    "height": 360,
     "backgroundColor": "black",
     "flyIn": {
         "type": "3d",
         "shape": "bezierCurve",
         "startingPoint": {
             "x": 0.5,
-            "y": 0.4,
+            "y": 0.9,
             "oscillation": {
                 "cycleLengthInSeconds": 20,
                 "width": 0.8
@@ -20,57 +21,95 @@
     "particles": {
         "perFrame": 50
     },
-    "noteMap": {
-        "36": "Kick 1",
-        "35": "Kick 2",
-        "38": "Snare",
-        "57": "Crash Right",
-        "55": "Crash Left",
-        "60": "HH Closed Tight",
-        "61": "HH Closed",
-        "62": "HH Open 1",
-        "63": "HH Open 2",
-        "64": "HH Open ?",
-        "65": "HH Open 3",
-        "72": "HH Pedal"
-    },
-    "colorizer": {
-        "type": "byNote",
-        "defaultColor": "white",
-        "noteColors": {
-            "Kick 1": "red",
-            "Kick 2": "maroon",
-            "Snare": "white",
-            "Crash Right": "cyan",
-            "Crash Left": "cyan",
-            "HH Closed Tight": "purple",
-            "HH Closed": "purple",
-            "HH Open 1": "#FF00FF",
-            "HH Open 2": "#FF00FF",
-            "HH Open 3": "#FF00FF",
-            "HH Open ?": "#FF00FF",
-            "HH Pedal": "purple"
+    "visualizers": {
+        "drumPads": {
+            "type": "drumPads",
+            "padHeight": 0.2,
+            "padY": 5,
+            "padOrder": [
+                [
+                    ["Cowbell"],
+                    ["Tom 1"],
+                    ["Tom 2"],
+                    ["Tom 3"],
+                    ["Tom 4"],
+                    ["Ride"]    
+                ],
+                [
+                    ["Crash Left"],
+                    [
+                        "HH Closed Tight",
+                        "HH Closed",
+                        "HH Open 1",
+                        "HH Open 2",
+                        "HH Open 3",
+                        "HH Open ?",
+                        "HH Pedal"
+                    ],
+                    ["Kick 1", "Kick 2"],
+                    ["Snare"],
+                    ["Crash Right"]
+                ]
+            ],
+            "impactSize": 20
         }
     },
-    "visualizer": {
-        "type": "drumPads",
-        "padHeight": 200,
-        "padY": 0,
-        "padOrder": [
-            ["Crash Left"],
-            [
-                "HH Closed Tight",
-                "HH Closed",
-                "HH Open 1",
-                "HH Open 2",
-                "HH Open 3",
-                "HH Open ?",
-                "HH Pedal"
-            ],
-            ["Kick 1", "Kick 2"],
-            ["Snare"],
-            ["Crash Right"]
-        ],
-        "impactSize": 75
-    }
+    "tracks": [
+        {
+            "name": "tempo track has no notes and no config"
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {
+            "name": "drums",
+            "noteMap": {
+                "36": "Kick 1",
+                "35": "Kick 2",
+                "38": "Snare",
+                "48": "Tom 1",
+                "47": "Tom 2",
+                "43": "Tom 3",
+                "41": "Tom 4",
+                "57": "Crash Right",
+                "55": "Crash Left",
+                "53": "Ride",
+                "60": "HH Closed Tight",
+                "61": "HH Closed",
+                "62": "HH Open 1",
+                "63": "HH Open 2",
+                "64": "HH Open ?",
+                "65": "HH Open 3",
+                "72": "HH Pedal",
+                "74": "Cowbell"
+            },
+            "colorizer": {
+                "type": "byNote",
+                "noteColors": {
+                    "Kick 1": "red",
+                    "Kick 2": "maroon",
+                    "Snare": "white",
+                    "Crash Right": "cyan",
+                    "Crash Left": "cyan",
+                    "Ride": "#00FF00",
+                    "HH Closed Tight": "purple",
+                    "HH Closed": "purple",
+                    "HH Open 1": "#FF00FF",
+                    "HH Open 2": "#FF00FF",
+                    "HH Open 3": "#FF00FF",
+                    "HH Open ?": "#FF00FF",
+                    "HH Pedal": "purple",
+                    "Tom 1": "blue",
+                    "Tom 2": "blue",
+                    "Tom 3": "blue",
+                    "Tom 4": "blue",
+                    "Cowbell": "magenta"
+                }
+            },
+            "visualizer": "drumPads"
+        }
+    ]
 }
