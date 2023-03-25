@@ -29,7 +29,6 @@ const particleFactories = {
 
 module.exports = (config) => {
     const {
-        noteMap,
         padHeight,
         padY,
         padOrder,
@@ -44,6 +43,11 @@ module.exports = (config) => {
         },
         tracks
     } = config
+
+    const noteMap = tracks.reduce(
+        (prev, next) => ({ ...prev, ...next.noteMap || {} }),
+        {}
+    )
 
     const myTracks = tracks.reduce((result, track, index) => {
         if (track.visualizer === 'drumPads') {
@@ -62,23 +66,37 @@ module.exports = (config) => {
         )
         return noteName => lookup[noteName]
     })()
-    const padAssignments = padOrder.reduce((assignments, nextPadAssignments, padIndex) => {
-        nextPadAssignments.forEach(noteName => {
-            assignments[getMidiNoteNumber(noteName)] = padIndex
-        })
-        return assignments
-    }, {})
+    let nextPadIndex = 0
+    const padAssignments = padOrder.reduce(
+        (allPads, nextRow) => ({
+            ...allPads,
+            ...nextRow.reduce(
+                (assignments, nextPadAssignments) => {
+                    nextPadAssignments.forEach(noteName => {
+                        assignments[getMidiNoteNumber(noteName)] = nextPadIndex
+                    })
+                    nextPadIndex += 1
+                    return assignments
+                },
+                {}
+            )
+        }),
+        {}
+    )
 
     const spacing = 10
-    const numberOfPads = padOrder.length
-    const padWidth = (width - spacing * (numberOfPads + 1)) / numberOfPads
-    const padLocations = Array(numberOfPads).fill(0).map((_, index) => ({
-        x: (index + 1) * spacing + index * padWidth,
-        y: padY,
-        height: padHeight,
-        width: padWidth,
-    }))
-    const padAspectRatio = padWidth / padHeight
+    const padLocations = padOrder.reduce(
+        (prevRows, row, rowIndex) => {
+            const padWidth = (width - spacing * (row.length + 1)) / row.length
+            return prevRows.concat(Array(row.length).fill(0).map((_, index) => ({
+                x: (index + 1) * spacing + index * padWidth,
+                y: padY + rowIndex * (padHeight * height + spacing),
+                height: padHeight * height,
+                width: padWidth,
+            })))
+        },
+        []
+    )
     const startingPoint = {
         x: width * flyIn.startingPoint.x,
         y: height * flyIn.startingPoint.y
@@ -190,7 +208,7 @@ module.exports = (config) => {
                 x: leftCurvePoint.x,
                 y: leftCurvePoint.y,
                 width,
-                height: width / padAspectRatio
+                height: width / (destinationPad.width / destinationPad.height)
             })
         }
     }

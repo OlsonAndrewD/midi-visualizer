@@ -9,6 +9,7 @@ module.exports = ({ config, song }) => {
         fps,
         noteApproachTime = 1000,
         noteImpactTime = 500,
+        tracks,
     } = config
     const { notes = [], pitchBends = [] } = song
 
@@ -52,7 +53,7 @@ module.exports = ({ config, song }) => {
     const getTrackColorizer = memoize(trackIndex => {
         const colorizer = configReader(config).getObject('colorizer', trackIndex)
         return colorizer
-            ? require(`./${path.join("colorizers", colorizer.type)}`)({ ...colorizer, lastNote })
+            ? require(`./${path.join("colorizers", colorizer.type)}`)({ ...colorizer, lastNote, track: tracks[trackIndex] })
             : (() => {
                 const white = { fillStyle: 'white' }
                 return () => white
