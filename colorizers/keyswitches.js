@@ -14,9 +14,6 @@ module.exports = ({
     const getCurrentColor = ({ midiNoteNumber }) => {
         const prevKeySwitchColor = activeKeyswitchColor
         activeKeyswitchColor = keyswitchColorLookup[midiNoteNumber] || activeKeyswitchColor
-        if (activeKeyswitchColor !== prevKeySwitchColor) {
-            console.log('activeKeySwitchColor', activeKeyswitchColor)
-        }
         return activeKeyswitchColor || defaultColor
     }
 
